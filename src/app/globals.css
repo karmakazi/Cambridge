@@ -1,26 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
+  --font-serif: var(--font-garamond), 'EB Garamond', Georgia, serif;
   --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+
+  /* Cambridge brand */
+  --color-cambridge-navy: #1e2b45;
+  --color-cambridge-navy-light: #243253;
+  --color-cambridge-gold: #c8975e;
+  --color-cambridge-gold-light: #d4aa7a;
+  --color-cambridge-cream: #f5f0e8;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --background: #f7f5f2;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --primary: #1e2b45;
+  --primary-foreground: #f5f0e8;
+  --secondary: #f0ece6;
+  --secondary-foreground: #1e2b45;
+  --muted: #f0ece6;
+  --muted-foreground: #6b6357;
+  --accent: #c8975e;
+  --accent-foreground: #ffffff;
+  --border: #e2ddd7;
+  --input: #e2ddd7;
+  --ring: #c8975e;
+  --radius: 0.375rem;
+  --sidebar: #1e2b45;
+  --sidebar-foreground: #f5f0e8;
+  --sidebar-primary: #c8975e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #243253;
+  --sidebar-accent-foreground: #f5f0e8;
+  --sidebar-border: rgba(255,255,255,0.08);
+  --sidebar-ring: #c8975e;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  h1, h2, h3 {
+    font-family: 'EB Garamond', Georgia, serif;
+    letter-spacing: -0.01em;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Cambridge utility classes */
+.font-garamond {
+  font-family: 'EB Garamond', Georgia, serif;
+}
+.text-gold {
+  color: #c8975e;
+}
+.bg-navy {
+  background-color: #1e2b45;
+}
+.text-cream {
+  color: #f5f0e8;
+}
+.label-caps {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
