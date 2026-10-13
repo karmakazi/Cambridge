@@ -1,21 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { getAuth } from "@/lib/auth";
 import { getResolvedMember, saveProfile } from "@/lib/store";
 import type { Member } from "@/lib/data";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Info } from "lucide-react";
+import { CheckCircle, Loader2, Info } from "lucide-react";
 
 const CONTACT_PREFS = [
-  { value: "email", label: "Show email address", desc: "Your email is visible to other logged-in members." },
-  { value: "request-intro", label: "Introductions via Cambridge", desc: "Members see a 'Request an introduction' button. Cambridge facilitates." },
+  { value: "email", label: "Show email address", desc: "Your email and phone are visible to other logged-in members." },
+  { value: "request-intro", label: "Introductions via Cambridge", desc: "Members see a 'Request an introduction' button. No contact details are shown." },
   { value: "private", label: "Private — contact via Cambridge only", desc: "No contact details visible. Only Cambridge staff can connect you." },
 ] as const;
+
+type SaveStatus = "idle" | "saving" | "saved";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -24,12 +25,17 @@ export default function ProfilePage() {
     title: "",
     organization: "",
     location: "",
+    address: "",
+    phone: "",
     bio: "",
     expertise: "",
     contactPreference: "email" as Member["contactPreference"],
     discoverable: true,
   });
-  const [saved, setSaved] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstRender = useRef(true);
+  const memberRef = useRef<Member | null>(null);
 
   useEffect(() => {
     const auth = getAuth();
@@ -37,10 +43,13 @@ export default function ProfilePage() {
     const m = getResolvedMember(auth.memberId);
     if (!m) return;
     setMember(m);
+    memberRef.current = m;
     setForm({
       title: m.title,
       organization: m.organization,
       location: m.location,
+      address: m.address ?? "",
+      phone: m.phone ?? "",
       bio: m.bio,
       expertise: m.expertise.join(", "),
       contactPreference: m.contactPreference,
@@ -48,45 +57,91 @@ export default function ProfilePage() {
     });
   }, [router]);
 
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!member) return;
+  // Auto-save: debounce 1s after any form change
+  const doSave = useCallback((currentForm: typeof form, currentMember: Member) => {
+    setSaveStatus("saving");
     const updates: Partial<Member> = {
-      title: form.title,
-      organization: form.organization,
-      location: form.location,
-      bio: form.bio,
-      expertise: form.expertise.split(",").map(s => s.trim()).filter(Boolean),
-      contactPreference: form.contactPreference,
-      discoverable: form.discoverable,
+      title: currentForm.title,
+      organization: currentForm.organization,
+      location: currentForm.location,
+      address: currentForm.address,
+      phone: currentForm.phone,
+      bio: currentForm.bio,
+      expertise: currentForm.expertise.split(",").map(s => s.trim()).filter(Boolean),
+      contactPreference: currentForm.contactPreference,
+      discoverable: currentForm.discoverable,
     };
-    saveProfile(member.id, updates);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  }
+    saveProfile(currentMember.id, updates);
+    setSaveStatus("saved");
+    setTimeout(() => setSaveStatus("idle"), 2500);
+  }, []);
+
+  useEffect(() => {
+    // Skip the initial population of the form
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (!memberRef.current) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setSaveStatus("saving");
+    const m = memberRef.current;
+    debounceRef.current = setTimeout(() => doSave(form, m), 900);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [form, doSave]);
 
   if (!member) return null;
 
   return (
     <AppShell>
       <div className="max-w-xl mx-auto px-6 py-10">
-        <div className="mb-8">
-          <p className="label-caps text-[#c8975e] mb-1">My Profile</p>
-          <h1 className="font-garamond text-3xl font-medium text-foreground">Edit your profile</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Control what other members see in the directory.
-          </p>
+
+        {/* Header with auto-save status */}
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <p className="label-caps text-[#c8975e] mb-1">My Profile</p>
+            <h1 className="font-garamond text-3xl font-medium text-foreground">Edit your profile</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Control what other members see in the directory.
+            </p>
+          </div>
+          {/* Save status indicator */}
+          <div className="mt-1 flex items-center gap-1.5 text-xs min-w-[80px] justify-end">
+            {saveStatus === "saving" && (
+              <>
+                <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
+                <span className="text-muted-foreground">Saving…</span>
+              </>
+            )}
+            {saveStatus === "saved" && (
+              <>
+                <CheckCircle className="w-3.5 h-3.5 text-green-600" />
+                <span className="text-green-600">Saved</span>
+              </>
+            )}
+          </div>
         </div>
 
-        <form onSubmit={handleSave} className="space-y-6">
-          {/* Basic info */}
+        <div className="space-y-6">
+          {/* Professional details */}
           <div className="bg-white rounded-lg border border-border p-6 space-y-4">
             <h2 className="font-garamond text-base font-medium">Professional Details</h2>
 
-            <div>
-              <label className="label-caps text-muted-foreground mb-1.5 block">Name</label>
-              <Input value={member.name} disabled className="bg-muted/40 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground mt-1">Contact Cambridge to update your name.</p>
+            {/* Photo + Name */}
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
+                {member.photo ? (
+                  <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-lg font-semibold text-[#1e2b45]">{member.avatar}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-foreground">{member.name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Contact Cambridge to update your name or photo.</p>
+              </div>
             </div>
 
             <div>
@@ -113,6 +168,25 @@ export default function ProfilePage() {
                 value={form.location}
                 onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
                 placeholder="e.g. London, United Kingdom"
+              />
+            </div>
+
+            <div>
+              <label className="label-caps text-muted-foreground mb-1.5 block">Business Address</label>
+              <Input
+                value={form.address}
+                onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+                placeholder="e.g. 1 Canada Square, London E14 5AB"
+              />
+            </div>
+
+            <div>
+              <label className="label-caps text-muted-foreground mb-1.5 block">Telephone</label>
+              <Input
+                value={form.phone}
+                onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                placeholder="e.g. +44 20 7946 0312"
+                type="tel"
               />
             </div>
 
@@ -168,7 +242,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Discovery */}
+          {/* Cross-forum discovery */}
           <div className="bg-white rounded-lg border border-border p-6">
             <h2 className="font-garamond text-base font-medium mb-1">Cross-Forum Discovery</h2>
             <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
@@ -198,22 +272,7 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
-
-          {/* Save */}
-          <div className="flex items-center justify-between">
-            <div>
-              {saved && (
-                <span className="flex items-center gap-1.5 text-sm text-green-600">
-                  <CheckCircle className="w-4 h-4" />
-                  Profile saved
-                </span>
-              )}
-            </div>
-            <Button type="submit" className="bg-[#1e2b45] hover:bg-[#243253] text-cream">
-              Save Changes
-            </Button>
-          </div>
-        </form>
+        </div>
       </div>
     </AppShell>
   );

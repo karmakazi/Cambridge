@@ -4,6 +4,8 @@ export type Member = {
   title: string;
   organization: string;
   location: string;
+  address: string;
+  phone: string;
   jurisdiction: string;
   practiceArea: string;
   expertise: string[];
@@ -14,6 +16,7 @@ export type Member = {
   contactPreference: "email" | "request-intro" | "private";
   discoverable: boolean; // cross-forum discovery opt-in
   avatar: string; // initials
+  photo: string; // URL
 };
 
 export type Forum = {
@@ -61,6 +64,8 @@ export const MEMBERS: Member[] = [
     title: "Managing Partner",
     organization: "Marchetti & Silveira LLP",
     location: "Milan, Italy",
+    address: "Via Montenapoleone 8, 20121 Milan, Italy",
+    phone: "+39 02 7634 8800",
     jurisdiction: "European Union",
     practiceArea: "Antitrust",
     expertise: ["Competition Law", "Merger Control", "State Aid", "Digital Markets"],
@@ -71,6 +76,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "email",
     discoverable: true,
     avatar: "EM",
+    photo: "https://i.pravatar.cc/150?img=47",
   },
   {
     id: "m002",
@@ -78,6 +84,8 @@ export const MEMBERS: Member[] = [
     title: "General Counsel",
     organization: "Meridian Capital Group",
     location: "London, United Kingdom",
+    address: "1 Canada Square, Canary Wharf, London E14 5AB",
+    phone: "+44 20 7946 0312",
     jurisdiction: "United Kingdom",
     practiceArea: "Private Capital Markets",
     expertise: ["Private Equity", "Fund Formation", "Cross-border M&A", "Carried Interest"],
@@ -88,6 +96,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "request-intro",
     discoverable: true,
     avatar: "JO",
+    photo: "https://i.pravatar.cc/150?img=68",
   },
   {
     id: "m003",
@@ -95,16 +104,19 @@ export const MEMBERS: Member[] = [
     title: "Partner",
     organization: "Singh Anand & Associates",
     location: "Singapore",
+    address: "8 Marina Boulevard, #22-01 Marina Bay Financial Centre, Singapore 018981",
+    phone: "+65 6225 4400",
     jurisdiction: "Asia-Pacific",
     practiceArea: "Privacy, Data & Cyber Security",
     expertise: ["PDPA Compliance", "Cross-border Data Transfers", "Incident Response", "AI Governance"],
     bio: "Priya is a leading data protection counsel in Southeast Asia, advising financial institutions and technology companies on regulatory compliance and cyber incident response.",
     forumsAttended: ["f003", "f006"],
     steeringCommittee: false,
-    contactEmail: "p.anand@singhanandassoicates.com",
+    contactEmail: "p.anand@singhanand.com.sg",
     contactPreference: "email",
     discoverable: true,
     avatar: "PA",
+    photo: "https://i.pravatar.cc/150?img=45",
   },
   {
     id: "m004",
@@ -112,6 +124,8 @@ export const MEMBERS: Member[] = [
     title: "Senior Partner",
     organization: "Holst Richter Rechtsanwälte",
     location: "Frankfurt, Germany",
+    address: "Taunusanlage 12, 60325 Frankfurt am Main, Germany",
+    phone: "+49 69 7104 5500",
     jurisdiction: "Germany",
     practiceArea: "Corporate Law & Finance",
     expertise: ["Restructuring", "Banking Law", "Debt Capital Markets", "ESG Finance"],
@@ -122,6 +136,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "email",
     discoverable: true,
     avatar: "MH",
+    photo: "https://i.pravatar.cc/150?img=53",
   },
   {
     id: "m005",
@@ -129,6 +144,8 @@ export const MEMBERS: Member[] = [
     title: "Chief Privacy Officer",
     organization: "Lumière Technologies",
     location: "Paris, France",
+    address: "25 Rue de Ponthieu, 75008 Paris, France",
+    phone: "+33 1 4266 9100",
     jurisdiction: "European Union",
     practiceArea: "Privacy, Data & Cyber Security",
     expertise: ["GDPR", "AI Act Compliance", "Data Ethics", "DPO Advisory"],
@@ -139,6 +156,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "email",
     discoverable: false,
     avatar: "SB",
+    photo: "https://i.pravatar.cc/150?img=49",
   },
   {
     id: "m006",
@@ -146,6 +164,8 @@ export const MEMBERS: Member[] = [
     title: "Partner",
     organization: "Nkrumah Mensah & Partners",
     location: "Accra, Ghana",
+    address: "No. 7 Ringway Close, Osu, Accra, Ghana",
+    phone: "+233 30 276 1400",
     jurisdiction: "West Africa",
     practiceArea: "Corporate Law & Finance",
     expertise: ["Natural Resources", "Foreign Direct Investment", "Pan-African M&A", "Extractive Industries"],
@@ -156,6 +176,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "request-intro",
     discoverable: true,
     avatar: "DN",
+    photo: "https://i.pravatar.cc/150?img=56",
   },
   {
     id: "m007",
@@ -163,6 +184,8 @@ export const MEMBERS: Member[] = [
     title: "Partner",
     organization: "Leroux Delacroix Avocats",
     location: "Montréal, Canada",
+    address: "1000 De La Gauchetière St W, Suite 2400, Montréal, QC H3B 4W5",
+    phone: "+1 514 397 8800",
     jurisdiction: "Canada",
     practiceArea: "Dispute Resolution",
     expertise: ["International Arbitration", "Commercial Litigation", "Class Actions", "Energy Disputes"],
@@ -173,6 +196,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "email",
     discoverable: true,
     avatar: "CL",
+    photo: "https://i.pravatar.cc/150?img=44",
   },
   {
     id: "m008",
@@ -180,6 +204,8 @@ export const MEMBERS: Member[] = [
     title: "Managing Director, Legal",
     organization: "GulfStream Asset Management",
     location: "Dubai, UAE",
+    address: "Level 15, Gate Building, DIFC, Dubai, UAE",
+    phone: "+971 4 376 2200",
     jurisdiction: "Middle East",
     practiceArea: "Family Office",
     expertise: ["Wealth Structuring", "Succession Planning", "Trust Law", "Sharia-Compliant Finance"],
@@ -190,6 +216,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "private",
     discoverable: true,
     avatar: "RP",
+    photo: "https://i.pravatar.cc/150?img=60",
   },
   {
     id: "m009",
@@ -197,6 +224,8 @@ export const MEMBERS: Member[] = [
     title: "Head of Legal, Nordics",
     organization: "Nordic Green Energy AS",
     location: "Oslo, Norway",
+    address: "Filipstad Brygge 1, 0252 Oslo, Norway",
+    phone: "+47 22 83 4400",
     jurisdiction: "Nordic Countries",
     practiceArea: "ESG & Environmental Regulation",
     expertise: ["Renewable Energy Law", "Carbon Markets", "Environmental Permitting", "Green Finance"],
@@ -207,6 +236,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "email",
     discoverable: true,
     avatar: "IS",
+    photo: "https://i.pravatar.cc/150?img=48",
   },
   {
     id: "m010",
@@ -214,6 +244,8 @@ export const MEMBERS: Member[] = [
     title: "Partner",
     organization: "Abernathy Caldwell LLP",
     location: "New York, USA",
+    address: "399 Park Avenue, 37th Floor, New York, NY 10022",
+    phone: "+1 212 446 7700",
     jurisdiction: "United States",
     practiceArea: "Enforcement",
     expertise: ["DOJ Investigations", "FCPA", "White Collar Defense", "Whistleblower Claims"],
@@ -224,6 +256,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "email",
     discoverable: true,
     avatar: "TA",
+    photo: "https://i.pravatar.cc/150?img=57",
   },
   {
     id: "m011",
@@ -231,6 +264,8 @@ export const MEMBERS: Member[] = [
     title: "General Counsel",
     organization: "Tanaka Precision Industries",
     location: "Tokyo, Japan",
+    address: "2-1 Marunouchi, Chiyoda-ku, Tokyo 100-0005, Japan",
+    phone: "+81 3 5220 8800",
     jurisdiction: "Japan",
     practiceArea: "Compliance & Corporate Governance",
     expertise: ["Board Governance", "Listed Company Compliance", "Corporate Investigations", "ESG Reporting"],
@@ -241,6 +276,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "email",
     discoverable: true,
     avatar: "YT",
+    photo: "https://i.pravatar.cc/150?img=69",
   },
   {
     id: "m012",
@@ -248,6 +284,8 @@ export const MEMBERS: Member[] = [
     title: "Partner",
     organization: "Vásquez & Reyes Abogados",
     location: "Bogotá, Colombia",
+    address: "Carrera 7 No. 71-52, Torre B Piso 12, Bogotá, Colombia",
+    phone: "+57 1 326 4400",
     jurisdiction: "Latin America",
     practiceArea: "Land Use Planning & Infrastructure",
     expertise: ["Infrastructure Finance", "PPP Structures", "Urban Development", "Mining Concessions"],
@@ -258,6 +296,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "email",
     discoverable: true,
     avatar: "AV",
+    photo: "https://i.pravatar.cc/150?img=46",
   },
   {
     id: "m013",
@@ -265,6 +304,8 @@ export const MEMBERS: Member[] = [
     title: "Senior Partner",
     organization: "MacAllister Duncan & Co",
     location: "Edinburgh, Scotland",
+    address: "16 Charlotte Square, Edinburgh EH2 4DR, Scotland",
+    phone: "+44 131 226 5500",
     jurisdiction: "United Kingdom",
     practiceArea: "Private Client",
     expertise: ["Estate Planning", "Heritage Assets", "Agricultural Estates", "Cross-border Succession"],
@@ -275,6 +316,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "request-intro",
     discoverable: true,
     avatar: "HM",
+    photo: "https://i.pravatar.cc/150?img=52",
   },
   {
     id: "m014",
@@ -282,6 +324,8 @@ export const MEMBERS: Member[] = [
     title: "Partner",
     organization: "Al-Rashidi Legal Group",
     location: "Riyadh, Saudi Arabia",
+    address: "King Fahd Road, Al Olaya District, Riyadh 12213, Saudi Arabia",
+    phone: "+966 11 462 8800",
     jurisdiction: "Middle East",
     practiceArea: "Corporate Law & Finance",
     expertise: ["Saudi Vision 2030", "Privatisation", "Capital Markets", "Foreign Investment"],
@@ -292,6 +336,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "email",
     discoverable: true,
     avatar: "FA",
+    photo: "https://i.pravatar.cc/150?img=51",
   },
   {
     id: "m015",
@@ -299,6 +344,8 @@ export const MEMBERS: Member[] = [
     title: "Managing Partner",
     organization: "Kowalski & Wiśniewski",
     location: "Warsaw, Poland",
+    address: "ul. Emilii Plater 53, 00-113 Warsaw, Poland",
+    phone: "+48 22 520 4400",
     jurisdiction: "Central & Eastern Europe",
     practiceArea: "Antitrust",
     expertise: ["CEE Competition Law", "Bid Rigging", "Dawn Raids", "Leniency Applications"],
@@ -309,6 +356,7 @@ export const MEMBERS: Member[] = [
     contactPreference: "email",
     discoverable: true,
     avatar: "RK",
+    photo: "https://i.pravatar.cc/150?img=54",
   },
 ];
 

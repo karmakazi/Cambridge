@@ -69,10 +69,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* User */}
       <div className="px-4 py-4 border-t border-white/8">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-full bg-[#c8975e]/20 flex items-center justify-center flex-shrink-0">
-            <span className="text-gold text-xs font-semibold">
-              {member.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-            </span>
+          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#c8975e]/20">
+            {member.photo ? (
+              <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-gold text-xs font-semibold">
+                  {member.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                </span>
+              </div>
+            )}
           </div>
           <div className="min-w-0">
             <p className="text-cream text-xs font-medium truncate">{member.name}</p>

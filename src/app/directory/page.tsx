@@ -9,7 +9,7 @@ import { getAllResolvedMembers } from "@/lib/store";
 import type { Member } from "@/lib/data";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, X, Globe, Building2 } from "lucide-react";
+import { Search, X, Globe, Mail, Phone } from "lucide-react";
 
 const PRACTICE_AREAS = [
   "Antitrust",
@@ -161,9 +161,15 @@ function MemberCard({ member: m }: { member: Member }) {
       className="bg-white rounded-lg border border-border p-4 hover:border-[#c8975e]/50 hover:bg-[#c8975e]/[0.02] transition-all group"
     >
       <div className="flex items-start gap-3">
-        {/* Avatar */}
-        <div className="w-10 h-10 rounded-full bg-[#1e2b45]/10 flex items-center justify-center flex-shrink-0">
-          <span className="text-xs font-semibold text-[#1e2b45]">{m.avatar}</span>
+        {/* Photo / Avatar */}
+        <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
+          {m.photo ? (
+            <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-xs font-semibold text-[#1e2b45]">{m.avatar}</span>
+            </div>
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-1">
@@ -179,6 +185,49 @@ function MemberCard({ member: m }: { member: Member }) {
               <Globe className="w-3 h-3" />{m.jurisdiction}
             </span>
           </div>
+
+          {/* Contact info — only shown when preference is "email" */}
+          <div className="mt-2 space-y-1">
+            {m.contactPreference === "email" && (
+              <>
+                {m.contactEmail && (
+                  <button
+                    type="button"
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = `mailto:${m.contactEmail}`; }}
+                    className="flex items-center gap-1.5 text-[11px] text-[#c8975e] hover:underline truncate max-w-full"
+                  >
+                    <Mail className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{m.contactEmail}</span>
+                  </button>
+                )}
+                {m.phone && (
+                  <button
+                    type="button"
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = `tel:${m.phone}`; }}
+                    className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Phone className="w-3 h-3 flex-shrink-0" />
+                    {m.phone}
+                  </button>
+                )}
+              </>
+            )}
+            {m.contactPreference === "request-intro" && (
+              <button
+                type="button"
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.location.href = `mailto:webhelp@cambridgeforums.com?subject=Introduction request: ${encodeURIComponent(m.name)}`;
+                }}
+                className="flex items-center gap-1.5 text-[11px] text-[#1e2b45] font-medium border border-[#1e2b45]/20 px-2 py-1 rounded hover:bg-[#1e2b45]/5 transition-colors mt-1"
+              >
+                <Mail className="w-3 h-3 flex-shrink-0" />
+                Request introduction
+              </button>
+            )}
+          </div>
+
           <div className="flex flex-wrap gap-1 mt-2">
             {m.expertise.slice(0, 2).map(e => (
               <span key={e} className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">{e}</span>
