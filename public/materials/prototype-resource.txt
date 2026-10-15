@@ -1,0 +1,5 @@
+Cambridge Forums prototype resource
+
+This placeholder represents a document supplied by Cambridge Forums for a member to review before or after a forum.
+
+In the production application, the document URL and access permissions will be supplied by the client CRM and content systems.

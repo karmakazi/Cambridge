@@ -1,0 +1,5 @@
+Cambridge Forums prototype materials pack
+
+This placeholder represents a bundled download of all materials available to the signed-in participant.
+
+In the production application, the bundle will be created from the participant's authorized forum resources.

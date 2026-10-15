@@ -1,152 +1,172 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { getAuth } from "@/lib/auth";
-import { getAllResolvedMembers } from "@/lib/store";
-import type { Member } from "@/lib/data";
+import type { Forum, Member } from "@/lib/data";
+import {
+  getDirectoryForums,
+  getDirectoryMembers,
+  type DirectoryScope,
+} from "@/lib/prototype-service";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, X, Globe, Mail, Phone } from "lucide-react";
+import { Globe, Mail, Phone, Search, X } from "lucide-react";
 
 const PRACTICE_AREAS = [
-  "Antitrust",
-  "Compliance & Corporate Governance",
-  "Corporate Law & Finance",
-  "Dispute Resolution",
-  "Enforcement",
-  "ESG & Environmental Regulation",
-  "Family Office",
-  "Land Use Planning & Infrastructure",
-  "Private Capital Markets",
-  "Private Client",
-  "Privacy, Data & Cyber Security",
+  "Antitrust", "Compliance & Corporate Governance", "Corporate Law & Finance",
+  "Dispute Resolution", "Enforcement", "ESG & Environmental Regulation",
+  "Family Office", "Land Use Planning & Infrastructure", "Private Capital Markets",
+  "Private Client", "Privacy, Data & Cyber Security",
 ];
 
 const JURISDICTIONS = [
-  "Asia-Pacific",
-  "Canada",
-  "Central & Eastern Europe",
-  "European Union",
-  "Germany",
-  "Japan",
-  "Latin America",
-  "Middle East",
-  "Nordic Countries",
-  "United Kingdom",
-  "United States",
-  "West Africa",
+  "Asia-Pacific", "Canada", "Central & Eastern Europe", "European Union", "Germany",
+  "Japan", "Latin America", "Middle East", "Nordic Countries", "United Kingdom",
+  "United States", "West Africa",
 ];
 
 export default function DirectoryPage() {
   const router = useRouter();
-  const [members, setMembers] = useState<Member[]>([]);
+  const [currentMemberId, setCurrentMemberId] = useState("");
+  const [forums, setForums] = useState<Forum[]>([]);
+  const [scope, setScope] = useState<DirectoryScope>("network");
+  const [forumId, setForumId] = useState("");
   const [query, setQuery] = useState("");
   const [practice, setPractice] = useState("");
   const [jurisdiction, setJurisdiction] = useState("");
 
   useEffect(() => {
-    const auth = getAuth();
-    if (!auth) { router.replace("/"); return; }
-    const all = getAllResolvedMembers().filter(m => m.discoverable);
-    setMembers(all);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      const auth = getAuth();
+      if (!auth) { router.replace("/"); return; }
+      setCurrentMemberId(auth.memberId);
+      setForums(getDirectoryForums(auth.memberId));
+    });
+    return () => { cancelled = true; };
   }, [router]);
 
+  const members = useMemo(
+    () => currentMemberId ? getDirectoryMembers(currentMemberId, scope, forumId) : [],
+    [currentMemberId, scope, forumId],
+  );
+
   const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    return members.filter(m => {
-      const matchQuery = !q || [
-        m.name, m.organization, m.title, m.location,
-        ...m.expertise,
-      ].some(s => s.toLowerCase().includes(q));
-      const matchPractice = !practice || m.practiceArea === practice;
-      const matchJurisdiction = !jurisdiction || m.jurisdiction === jurisdiction;
-      return matchQuery && matchPractice && matchJurisdiction;
+    const normalizedQuery = query.toLowerCase();
+    return members.filter(member => {
+      const matchesQuery = !normalizedQuery || [
+        member.name, member.organization, member.title, member.location, ...member.expertise,
+      ].some(value => value.toLowerCase().includes(normalizedQuery));
+      const matchesPractice = !practice || member.practiceArea === practice;
+      const matchesJurisdiction = !jurisdiction || member.jurisdiction === jurisdiction;
+      return matchesQuery && matchesPractice && matchesJurisdiction;
     });
   }, [members, query, practice, jurisdiction]);
 
-  const activeFilters = [practice, jurisdiction].filter(Boolean);
+  const activeFilters = [forumId, practice, jurisdiction].filter(Boolean);
+
+  function clearFilters() {
+    setForumId("");
+    setPractice("");
+    setJurisdiction("");
+  }
 
   return (
     <AppShell>
       <div className="max-w-4xl mx-auto px-6 py-10">
-        {/* Header */}
         <div className="mb-6">
           <p className="label-caps text-[#c8975e] mb-1">Member Directory</p>
-          <h1 className="font-garamond text-3xl font-medium text-foreground">
-            Find the right person.
-          </h1>
+          <h1 className="font-garamond text-3xl font-medium text-foreground">Find the right person.</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {members.length} members across {new Set(members.map(m => m.jurisdiction)).size} jurisdictions.
+            Start with people in your forums, or explore the wider Cambridge network.
           </p>
         </div>
 
-        {/* Search + filters */}
+        <div className="inline-flex p-1 mb-5 bg-muted rounded-lg" aria-label="Directory scope">
+          {([
+            ["network", "My Forum Network"],
+            ["all", "All Cambridge Members"],
+          ] as Array<[DirectoryScope, string]>).map(([value, label]) => (
+            <button
+              type="button"
+              key={value}
+              onClick={() => { setScope(value); setForumId(""); }}
+              className={`h-8 px-3 rounded-md text-xs font-medium transition-colors ${
+                scope === value ? "bg-white text-[#1e2b45] shadow-sm" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >{label}</button>
+          ))}
+        </div>
+
         <div className="space-y-3 mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
+              aria-label="Search members"
               placeholder="Search by name, firm, expertise…"
               value={query}
-              onChange={e => setQuery(e.target.value)}
+              onChange={event => setQuery(event.target.value)}
               className="pl-9 bg-white"
             />
           </div>
 
           <div className="flex gap-2 flex-wrap">
             <select
-              value={practice}
-              onChange={e => setPractice(e.target.value)}
-              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:ring-0 focus:outline-none focus:border-[#c8975e]"
+              aria-label="Filter by forum"
+              value={forumId}
+              onChange={event => setForumId(event.target.value)}
+              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#c8975e]"
             >
-              <option value="">All Practice Areas</option>
-              {PRACTICE_AREAS.map(p => <option key={p} value={p}>{p}</option>)}
+              <option value="">All my forums</option>
+              {forums.map(forum => <option key={forum.id} value={forum.id}>{forum.title}</option>)}
             </select>
 
             <select
+              aria-label="Filter by practice area"
+              value={practice}
+              onChange={event => setPractice(event.target.value)}
+              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#c8975e]"
+            >
+              <option value="">All Practice Areas</option>
+              {PRACTICE_AREAS.map(value => <option key={value} value={value}>{value}</option>)}
+            </select>
+
+            <select
+              aria-label="Filter by jurisdiction"
               value={jurisdiction}
-              onChange={e => setJurisdiction(e.target.value)}
-              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:ring-0 focus:outline-none focus:border-[#c8975e]"
+              onChange={event => setJurisdiction(event.target.value)}
+              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#c8975e]"
             >
               <option value="">All Jurisdictions</option>
-              {JURISDICTIONS.map(j => <option key={j} value={j}>{j}</option>)}
+              {JURISDICTIONS.map(value => <option key={value} value={value}>{value}</option>)}
             </select>
 
             {activeFilters.length > 0 && (
-              <button
-                onClick={() => { setPractice(""); setJurisdiction(""); }}
-                className="h-9 px-3 text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground border border-border rounded-md bg-white"
-              >
-                <X className="w-3 h-3" /> Clear filters
+              <button type="button" onClick={clearFilters} className="h-9 px-3 text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground border border-border rounded-md bg-white">
+                <X className="w-3 h-3" />Clear filters
               </button>
             )}
           </div>
         </div>
 
-        {/* Results count */}
         <p className="text-xs text-muted-foreground mb-4">
           {filtered.length} {filtered.length === 1 ? "member" : "members"} found
+          {scope === "network" ? " in your forum network" : " across Cambridge"}
         </p>
 
-        {/* Member grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {filtered.map(m => (
-            <MemberCard key={m.id} member={m} />
-          ))}
+          {filtered.map(member => <MemberCard key={member.id} member={member} />)}
         </div>
 
         {filtered.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
             <Search className="w-8 h-8 mx-auto mb-3 opacity-30" />
             <p className="text-sm">No members match your search.</p>
-            <button
-              onClick={() => { setQuery(""); setPractice(""); setJurisdiction(""); }}
-              className="mt-2 text-xs text-[#c8975e] hover:underline"
-            >
-              Clear all filters
-            </button>
+            <button type="button" onClick={() => { setQuery(""); clearFilters(); }} className="mt-2 text-xs text-[#9a6a33] hover:underline">Clear all filters</button>
           </div>
         )}
       </div>
@@ -154,90 +174,55 @@ export default function DirectoryPage() {
   );
 }
 
-function MemberCard({ member: m }: { member: Member }) {
+function MemberCard({ member }: { member: Member }) {
   return (
-    <Link
-      href={`/directory/${m.id}`}
-      className="bg-white rounded-lg border border-border p-4 hover:border-[#c8975e]/50 hover:bg-[#c8975e]/[0.02] transition-all group"
-    >
+    <article className="bg-white rounded-lg border border-border p-4 hover:border-[#c8975e]/50 hover:bg-[#c8975e]/[0.02] transition-all group">
       <div className="flex items-start gap-3">
-        {/* Photo / Avatar */}
-        <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
-          {m.photo ? (
-            <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+        <Link href={`/directory/${member.id}`} aria-label={`View ${member.name}'s profile`} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
+          {member.photo ? (
+            <img src={member.photo} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="text-xs font-semibold text-[#1e2b45]">{m.avatar}</span>
-            </div>
+            <span className="w-full h-full flex items-center justify-center text-xs font-semibold text-[#1e2b45]">{member.avatar}</span>
           )}
-        </div>
+        </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-1">
-            <p className="font-medium text-sm text-foreground group-hover:text-[#c8975e] transition-colors leading-tight">{m.name}</p>
-            {m.steeringCommittee && (
-              <Badge className="bg-[#c8975e]/10 text-[#c8975e] text-[9px] px-1 h-4 flex-shrink-0 border-0 font-medium">SC</Badge>
-            )}
+            <Link href={`/directory/${member.id}`} className="font-medium text-sm text-foreground group-hover:text-[#9a6a33] transition-colors leading-tight hover:underline">{member.name}</Link>
+            {member.steeringCommittee && <Badge className="bg-[#c8975e]/10 text-[#9a6a33] text-[9px] px-1 h-4 flex-shrink-0 border-0 font-medium">SC</Badge>}
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">{m.title}</p>
-          <p className="text-xs text-muted-foreground truncate">{m.organization}</p>
-          <div className="flex items-center gap-3 mt-2">
-            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <Globe className="w-3 h-3" />{m.jurisdiction}
-            </span>
-          </div>
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">{member.title}</p>
+          <p className="text-xs text-muted-foreground truncate">{member.organization}</p>
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground mt-2"><Globe className="w-3 h-3" />{member.jurisdiction}</span>
 
-          {/* Contact info — only shown when preference is "email" */}
           <div className="mt-2 space-y-1">
-            {m.contactPreference === "email" && (
+            {member.contactPreference === "email" && (
               <>
-                {m.contactEmail && (
-                  <button
-                    type="button"
-                    onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = `mailto:${m.contactEmail}`; }}
-                    className="flex items-center gap-1.5 text-[11px] text-[#c8975e] hover:underline truncate max-w-full"
-                  >
-                    <Mail className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{m.contactEmail}</span>
-                  </button>
+                {member.contactEmail && (
+                  <a href={`mailto:${member.contactEmail}`} className="flex items-center gap-1.5 text-[11px] text-[#9a6a33] hover:underline truncate max-w-full">
+                    <Mail className="w-3 h-3 flex-shrink-0" /><span className="truncate">{member.contactEmail}</span>
+                  </a>
                 )}
-                {m.phone && (
-                  <button
-                    type="button"
-                    onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = `tel:${m.phone}`; }}
-                    className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Phone className="w-3 h-3 flex-shrink-0" />
-                    {m.phone}
-                  </button>
+                {member.phone && (
+                  <a href={`tel:${member.phone}`} className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                    <Phone className="w-3 h-3 flex-shrink-0" />{member.phone}
+                  </a>
                 )}
               </>
             )}
-            {m.contactPreference === "request-intro" && (
-              <button
-                type="button"
-                onClick={e => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  window.location.href = `mailto:webhelp@cambridgeforums.com?subject=Introduction request: ${encodeURIComponent(m.name)}`;
-                }}
-                className="flex items-center gap-1.5 text-[11px] text-[#1e2b45] font-medium border border-[#1e2b45]/20 px-2 py-1 rounded hover:bg-[#1e2b45]/5 transition-colors mt-1"
-              >
-                <Mail className="w-3 h-3 flex-shrink-0" />
-                Request introduction
-              </button>
+            {member.contactPreference === "request-intro" && (
+              <a
+                href={`mailto:webhelp@cambridgeforums.com?subject=${encodeURIComponent(`Introduction request: ${member.name}`)}`}
+                className="inline-flex items-center gap-1.5 text-[11px] text-[#1e2b45] font-medium border border-[#1e2b45]/20 px-2 py-1 rounded hover:bg-[#1e2b45]/5 transition-colors mt-1"
+              ><Mail className="w-3 h-3 flex-shrink-0" />Request introduction</a>
             )}
           </div>
 
           <div className="flex flex-wrap gap-1 mt-2">
-            {m.expertise.slice(0, 2).map(e => (
-              <span key={e} className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">{e}</span>
-            ))}
-            {m.expertise.length > 2 && (
-              <span className="text-[10px] text-muted-foreground px-1.5 py-0.5">+{m.expertise.length - 2}</span>
-            )}
+            {member.expertise.slice(0, 2).map(value => <span key={value} className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">{value}</span>)}
+            {member.expertise.length > 2 && <span className="text-[10px] text-muted-foreground px-1.5 py-0.5">+{member.expertise.length - 2}</span>}
           </div>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }

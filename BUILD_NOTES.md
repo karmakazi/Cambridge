@@ -3,7 +3,7 @@
 > **Purpose:** Handoff notes for a new AI instance or developer picking up this project.  
 > **Last updated:** October 2026  
 > **Repo:** https://github.com/karmakazi/Cambridge.git  
-> **Project folder:** `/Users/andrewh/Documents/Development/Cursor Projects/Cambridge Platform Protoype/cambridge-platform`
+> **Project folder:** `Cambridge Forums/cambridge-platform` (client documents live beside it in `client-docs/`)
 
 ---
 
@@ -96,7 +96,7 @@ src/
 │   │   └── [id]/
 │   │       └── page.tsx        # Individual member profile page
 │   └── profile/
-│       └── page.tsx            # Edit own profile (auto-saves)
+│       └── page.tsx            # Edit profile with debounced auto-save
 ├── components/
 │   ├── AppShell.tsx            # Sidebar nav + mobile header — wraps all protected pages
 │   └── ui/                     # shadcn/ui components (button, input, badge, card, etc.)
@@ -104,6 +104,7 @@ src/
     ├── data.ts                 # All seed data: Member type, Forum type, MEMBERS[], FORUMS[]
     ├── auth.ts                 # localStorage auth helpers
     ├── store.ts                # localStorage profile store (merges seed data + edits)
+    ├── prototype-service.ts    # Async CRM-shaped boundary for RSVP, directory, profile
     └── utils.ts                # shadcn cn() utility
 ```
 
@@ -113,7 +114,7 @@ src/
 
 ### How it works
 
-All data lives in `src/lib/data.ts` as TypeScript constants. There is no API or database.
+All data lives in `src/lib/data.ts` as TypeScript constants. There is no API or database. Interactive pages call `prototype-service.ts`, which simulates asynchronous CRM operations while delegating to seed data and `localStorage`. A production implementation can replace these functions with API calls without redesigning the pages.
 
 User-made edits (profile changes) are stored in `localStorage` under the key `cf_profiles` as a `Record<memberId, Partial<Member>>`. The `store.ts` functions merge seed data with any saved edits at read time:
 
@@ -127,6 +128,7 @@ This means:
 - The seed data in `data.ts` is the source of truth for all members initially
 - Any profile edit made through the UI persists across page refreshes but is lost if the browser's localStorage is cleared
 - **To reset all profile edits:** open browser DevTools → Application → Local Storage → delete `cf_profiles`
+- RSVP changes are stored separately under `cf_rsvps`
 
 ### Member type
 
@@ -165,6 +167,10 @@ type Forum = {
   venue: string;
   status: "upcoming" | "past";
   participants: string[];      // Array of Member IDs
+  websiteUrl: string;
+  factSheetUrl: string;
+  materialsBundleUrl: string;
+  memberFees: Record<string, string>;
   agenda: AgendaItem[];
   materials: Material[];
   logistics: Logistics;
@@ -229,21 +235,25 @@ To test as a different member, sign out (sidebar) and log in with that member's 
 ### `/dashboard` — My Forums
 
 - Shows upcoming forums first, then past
+- Upcoming forums include RSVP status, comments, a personalized fee, and a fact sheet
+- Agenda speakers link to member profiles where a matching member exists
 - Each forum is a collapsible card with four tabs: **Agenda / Materials / Participants / Logistics**
-- Materials tab has Download buttons (prototype — no actual file download)
+- Materials and "Download all" links return clearly labelled placeholder files
+- Venue addresses open in Google Maps; Cambridge contact details are actionable
 - Participants tab lists members as links to their directory profiles
 - Reads from `getForumsForMember(auth.memberId)` which filters `FORUMS[]` by `participants` array
 
 ### `/directory` — Member Directory
 
-- Filters `getAllResolvedMembers()` to `discoverable: true` only
+- Opens on **My Forum Network**, with a switch to **All Cambridge Members**
+- Supports filtering the network to a specific forum
 - Client-side search across name, org, title, location, expertise
 - Two dropdowns: Practice Area + Jurisdiction
 - Member cards show: photo, name, title, org, jurisdiction, expertise tags, and contact info based on preference:
   - `"email"` → shows email (gold link) + phone number
   - `"request-intro"` → shows "Request introduction" button (mailto: to Cambridge)
   - `"private"` → shows nothing
-- **Known HTML rule:** contact links inside cards are `<button>` elements (not `<a>`) to avoid nested `<a>` inside the card's `<Link>` wrapper
+- Cards use a non-link container so email and phone are valid, directly clickable links
 
 ### `/directory/[id]` — Member Profile
 
@@ -253,9 +263,9 @@ To test as a different member, sign out (sidebar) and log in with that member's 
 
 ### `/profile` — Edit Profile
 
-- **Auto-saves** — no save button. Uses a 900ms debounce on form changes.
-- Save status shown top-right: "Saving…" (spinner) → "Saved ✓" (fades after 2.5s)
-- A `isFirstRender` ref prevents a spurious save on initial data load
+- Automatically saves approximately 900ms after the member stops editing
+- Shows visible **Saving…** and **Saved** status feedback
+- Auto-save calls the async prototype service so production can replace local storage with the CRM API
 - Profile photo is read-only ("Contact Cambridge to update")
 - Editable fields: Title, Organisation, Location, Business Address, Telephone, Expertise (comma-separated), Bio
 - Contact preference radio: email / request-intro / private
@@ -285,8 +295,8 @@ This controls what appears across the entire app:
 
 ## Known Patterns & Decisions
 
-### No `<a>` inside `<Link>`
-Directory cards are Next.js `<Link>` components (render as `<a>`). Contact links inside them must be `<button>` elements with `onClick` using `window.location.href`. Nesting `<a>` inside `<a>` is invalid HTML and causes a React hydration error.
+### Valid interactive markup
+Directory cards use an `<article>` container. Profile names/photos, email addresses, and phone numbers can therefore be separate links without nesting anchors.
 
 ### `"use client"` on all pages
 All pages use client-side React hooks (`useEffect`, `useState`, `useRouter`) so they all carry the `"use client"` directive. Next.js App Router defaults to Server Components — the `"use client"` boundary must be at the top of every file that touches localStorage or the router.
@@ -297,16 +307,8 @@ All pages use client-side React hooks (`useEffect`, `useState`, `useRouter`) so 
 ### LocalStorage is client-only
 All `localStorage` reads are guarded with `if (typeof window === "undefined") return null` to prevent SSR errors. Next.js may attempt to render pages on the server even in client components during the build.
 
-### Auto-save implementation
-```typescript
-// isFirstRender ref prevents saving on initial data load
-const isFirstRender = useRef(true);
-
-useEffect(() => {
-  if (isFirstRender.current) { isFirstRender.current = false; return; }
-  // debounce + save...
-}, [form]);
-```
+### Prototype service boundary
+`prototype-service.ts` is the UI's integration seam. RSVP and profile submissions are async even though they currently write to local storage. Directory scope logic also lives there rather than in the page component.
 
 ---
 
@@ -316,10 +318,10 @@ useEffect(() => {
 |---|---|
 | Structured Q&A | Discovery doc says validate demand first — not built |
 | Email digests / notifications | Not built |
-| Real file downloads | Materials tab has download buttons but no actual files |
+| Final forum documents | Current downloads are labelled placeholder files |
 | Real auth | Magic link is fully mocked — needs Clerk, Auth.js, or similar for production |
 | Real database | Replace localStorage with Supabase (PostgreSQL) — data layer is abstracted in `store.ts` so UI changes are minimal |
-| Cross-forum discovery gating | Currently all `discoverable: true` members appear to all users — no actual forum-membership check |
+| Server-enforced visibility | Prototype filters network/discoverability in the browser; production must enforce this in the API |
 | Steering committee tools | Not in MVP scope |
 | Mobile polish | Basic responsive layout exists but not deeply tested |
 
@@ -330,7 +332,7 @@ useEffect(() => {
 The prototype was designed so the jump to production is a data-layer swap, not a rebuild:
 
 1. **Auth:** Replace `src/lib/auth.ts` mock functions with Clerk or Auth.js magic link. The `AuthState` shape stays the same.
-2. **Database:** Replace `src/lib/store.ts` localStorage functions with Supabase client calls. `getResolvedMember()`, `getAllResolvedMembers()`, and `saveProfile()` are the only functions pages call — swap their implementations.
+2. **CRM/data API:** Replace the implementations in `src/lib/prototype-service.ts` with authenticated CRM/API calls while retaining its page-facing types. Replace direct read helpers in `store.ts` as remaining screens migrate.
 3. **Seed data:** `src/lib/data.ts` becomes the data import/migration script rather than the live data source.
 4. **Deploy:** Vercel — `npm run build` passes cleanly, zero config needed.
 
@@ -347,6 +349,8 @@ npx tsc --noEmit
 
 # Production build (also validates types)
 npm run build
+# If Turbopack cannot bind its internal helper port in a restricted shell:
+npx next build --webpack
 
 # Reset all prototype data in browser
 # DevTools → Application → Local Storage → Clear all cf_* keys
@@ -357,5 +361,5 @@ npm run build
 ## Git
 
 - Remote: `https://github.com/karmakazi/Cambridge.git`
-- Branch: `main`
+- Working branch: `james/platform-next-steps`
 - Commits follow the pattern: short imperative summary + bullet list of changes

@@ -1,0 +1,5 @@
+Cambridge Forums prototype fact sheet
+
+This placeholder represents the personalized fee and inclusions document displayed to an invited participant.
+
+In the production application, participant-specific pricing and document links will be supplied by the client CRM.

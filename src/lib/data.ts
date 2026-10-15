@@ -28,6 +28,10 @@ export type Forum = {
   venue: string;
   status: "upcoming" | "past";
   participants: string[]; // member IDs
+  websiteUrl: string;
+  factSheetUrl: string;
+  materialsBundleUrl: string;
+  memberFees: Record<string, string>;
   agenda: AgendaItem[];
   materials: Material[];
   logistics: Logistics;
@@ -38,6 +42,7 @@ export type AgendaItem = {
   title: string;
   description: string;
   speaker?: string;
+  speakerMemberId?: string;
 };
 
 export type Material = {
@@ -45,6 +50,7 @@ export type Material = {
   title: string;
   type: "pdf" | "slides" | "reading";
   size: string;
+  url: string;
 };
 
 export type Logistics = {
@@ -373,20 +379,24 @@ export const FORUMS: Forum[] = [
     venue: "Hotel Amigo",
     status: "upcoming",
     participants: ["m001", "m004", "m009", "m015"],
+    websiteUrl: "https://www.cambridgeforums.com",
+    factSheetUrl: "/materials/prototype-fact-sheet.txt",
+    materialsBundleUrl: "/materials/prototype-forum-pack.txt",
+    memberFees: { m001: "$4,950 CAD", m004: "$4,950 CAD", m009: "$5,250 CAD", m015: "$4,750 CAD" },
     agenda: [
-      { time: "09:00", title: "Welcome & Introductions", description: "Chair's opening remarks and participant introductions.", speaker: "Elena Marchetti" },
+      { time: "09:00", title: "Welcome & Introductions", description: "Chair's opening remarks and participant introductions.", speaker: "Elena Marchetti", speakerMemberId: "m001" },
       { time: "09:30", title: "Digital Markets Act: 18 Months In", description: "A roundtable assessment of DMA enforcement and its practical impact on designated gatekeepers.", speaker: "Panel" },
       { time: "11:00", title: "Break", description: "", },
       { time: "11:15", title: "Merger Control in Volatile Markets", description: "Discussion of recent DG COMP decisional practice and shifting remedies policy.", speaker: "Panel" },
       { time: "13:00", title: "Lunch", description: "Hosted lunch at the hotel. Informal networking." },
       { time: "14:30", title: "State Aid in the Green Transition", description: "Examining how energy subsidies and ESG incentives interact with EU state aid rules.", speaker: "Panel" },
-      { time: "16:00", title: "Closing Discussion & Wrap-up", description: "Chair's summary and forward look.", speaker: "Elena Marchetti" },
+      { time: "16:00", title: "Closing Discussion & Wrap-up", description: "Chair's summary and forward look.", speaker: "Elena Marchetti", speakerMemberId: "m001" },
       { time: "19:30", title: "Dinner", description: "Private dinner at Brasserie La Maison du Cygne." },
     ],
     materials: [
-      { id: "mat001", title: "DMA Enforcement Summary — Oct 2026", type: "pdf", size: "1.2 MB" },
-      { id: "mat002", title: "Merger Control Trends Q3 2026", type: "pdf", size: "890 KB" },
-      { id: "mat003", title: "Pre-reading: State Aid & Green Deal", type: "reading", size: "340 KB" },
+      { id: "mat001", title: "DMA Enforcement Summary — Oct 2026", type: "pdf", size: "1.2 MB", url: "/materials/prototype-resource.txt" },
+      { id: "mat002", title: "Merger Control Trends Q3 2026", type: "pdf", size: "890 KB", url: "/materials/prototype-resource.txt" },
+      { id: "mat003", title: "Pre-reading: State Aid & Green Deal", type: "reading", size: "340 KB", url: "/materials/prototype-resource.txt" },
     ],
     logistics: {
       hotel: "Hotel Amigo",
@@ -407,18 +417,22 @@ export const FORUMS: Forum[] = [
     venue: "The Ned",
     status: "upcoming",
     participants: ["m002", "m006", "m010", "m014"],
+    websiteUrl: "https://www.cambridgeforums.com",
+    factSheetUrl: "/materials/prototype-fact-sheet.txt",
+    materialsBundleUrl: "/materials/prototype-forum-pack.txt",
+    memberFees: { m002: "£3,250", m006: "£3,250", m010: "£3,500", m014: "£3,100" },
     agenda: [
-      { time: "09:00", title: "Welcome", description: "Opening remarks from the Chair.", speaker: "James Okafor" },
+      { time: "09:00", title: "Welcome", description: "Opening remarks from the Chair.", speaker: "James Okafor", speakerMemberId: "m002" },
       { time: "09:30", title: "Secondary Markets & Liquidity", description: "The evolution of LP secondary transactions and GP-led restructurings.", speaker: "Panel" },
       { time: "11:00", title: "Break", description: "" },
       { time: "11:15", title: "Continuation Funds: Lessons Learned", description: "A candid discussion of deal structuring, conflicts, and LP expectations.", speaker: "Panel" },
       { time: "13:00", title: "Lunch", description: "" },
       { time: "14:30", title: "Emerging Markets Capital Raising", description: "Challenges and opportunities in West Africa, the Gulf, and Southeast Asia.", speaker: "Panel" },
-      { time: "16:30", title: "Closing Remarks", description: "", speaker: "James Okafor" },
+      { time: "16:30", title: "Closing Remarks", description: "", speaker: "James Okafor", speakerMemberId: "m002" },
     ],
     materials: [
-      { id: "mat004", title: "Global PE Market Update Q3 2026", type: "pdf", size: "2.1 MB" },
-      { id: "mat005", title: "Continuation Fund Structures — Deck", type: "slides", size: "4.3 MB" },
+      { id: "mat004", title: "Global PE Market Update Q3 2026", type: "pdf", size: "2.1 MB", url: "/materials/prototype-resource.txt" },
+      { id: "mat005", title: "Continuation Fund Structures — Deck", type: "slides", size: "4.3 MB", url: "/materials/prototype-resource.txt" },
     ],
     logistics: {
       hotel: "The Ned",
@@ -439,18 +453,22 @@ export const FORUMS: Forum[] = [
     venue: "Pulitzer Amsterdam",
     status: "upcoming",
     participants: ["m003", "m005", "m011"],
+    websiteUrl: "https://www.cambridgeforums.com",
+    factSheetUrl: "/materials/prototype-fact-sheet.txt",
+    materialsBundleUrl: "/materials/prototype-forum-pack.txt",
+    memberFees: { m003: "€3,850", m005: "€3,850", m011: "€4,100" },
     agenda: [
-      { time: "09:00", title: "Welcome", description: "Opening remarks.", speaker: "Priya Anand" },
+      { time: "09:00", title: "Welcome", description: "Opening remarks.", speaker: "Priya Anand", speakerMemberId: "m003" },
       { time: "09:30", title: "EU AI Act — Practical Implications", description: "Mapping high-risk AI systems to compliance obligations.", speaker: "Panel" },
       { time: "11:15", title: "Cross-Border Data Transfers Post-Schrems", description: "Standard contractual clauses and transfer impact assessments in practice.", speaker: "Panel" },
       { time: "13:00", title: "Lunch", description: "" },
       { time: "14:30", title: "Cyber Incident Response — A Crisis Simulation", description: "Tabletop exercise: 48 hours after a ransomware attack.", speaker: "Panel" },
-      { time: "16:30", title: "Closing", description: "", speaker: "Priya Anand" },
+      { time: "16:30", title: "Closing", description: "", speaker: "Priya Anand", speakerMemberId: "m003" },
     ],
     materials: [
-      { id: "mat006", title: "EU AI Act — Compliance Roadmap", type: "pdf", size: "1.8 MB" },
-      { id: "mat007", title: "SCCs Practical Guide 2026", type: "pdf", size: "920 KB" },
-      { id: "mat008", title: "Incident Response Simulation Brief", type: "pdf", size: "440 KB" },
+      { id: "mat006", title: "EU AI Act — Compliance Roadmap", type: "pdf", size: "1.8 MB", url: "/materials/prototype-resource.txt" },
+      { id: "mat007", title: "SCCs Practical Guide 2026", type: "pdf", size: "920 KB", url: "/materials/prototype-resource.txt" },
+      { id: "mat008", title: "Incident Response Simulation Brief", type: "pdf", size: "440 KB", url: "/materials/prototype-resource.txt" },
     ],
     logistics: {
       hotel: "Pulitzer Amsterdam",
@@ -471,10 +489,14 @@ export const FORUMS: Forum[] = [
     venue: "St. Regis Washington",
     status: "past",
     participants: ["m001", "m007", "m012", "m015"],
+    websiteUrl: "https://www.cambridgeforums.com",
+    factSheetUrl: "/materials/prototype-fact-sheet.txt",
+    materialsBundleUrl: "/materials/prototype-forum-pack.txt",
+    memberFees: {},
     agenda: [],
     materials: [
-      { id: "mat009", title: "Forum Summary & Key Themes", type: "pdf", size: "680 KB" },
-      { id: "mat010", title: "DOJ Antitrust Division — Enforcement Trends", type: "pdf", size: "1.1 MB" },
+      { id: "mat009", title: "Forum Summary & Key Themes", type: "pdf", size: "680 KB", url: "/materials/prototype-resource.txt" },
+      { id: "mat010", title: "DOJ Antitrust Division — Enforcement Trends", type: "pdf", size: "1.1 MB", url: "/materials/prototype-resource.txt" },
     ],
     logistics: {
       hotel: "St. Regis Washington D.C.",
@@ -495,10 +517,14 @@ export const FORUMS: Forum[] = [
     venue: "Beau-Rivage Hotel",
     status: "past",
     participants: ["m002", "m004", "m008", "m013"],
+    websiteUrl: "https://www.cambridgeforums.com",
+    factSheetUrl: "/materials/prototype-fact-sheet.txt",
+    materialsBundleUrl: "/materials/prototype-forum-pack.txt",
+    memberFees: {},
     agenda: [],
     materials: [
-      { id: "mat011", title: "Forum Summary — June 2025", type: "pdf", size: "720 KB" },
-      { id: "mat012", title: "Global Wealth Structures Outlook", type: "slides", size: "3.2 MB" },
+      { id: "mat011", title: "Forum Summary — June 2025", type: "pdf", size: "720 KB", url: "/materials/prototype-resource.txt" },
+      { id: "mat012", title: "Global Wealth Structures Outlook", type: "slides", size: "3.2 MB", url: "/materials/prototype-resource.txt" },
     ],
     logistics: {
       hotel: "Beau-Rivage Hotel",
