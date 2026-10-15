@@ -54,35 +54,49 @@ function ForumCard({ forum, memberId }: { forum: Forum; memberId: string }) {
 
   return (
     <div className="bg-white rounded-lg border border-border overflow-hidden">
-      <button
-        type="button"
-        className="w-full px-6 py-4 flex items-start justify-between text-left hover:bg-muted/30 transition-colors"
-        onClick={() => setOpen(value => !value)}
-        aria-expanded={open}
-      >
+      <div className="px-6 py-4 flex items-start justify-between gap-3 hover:bg-muted/30 transition-colors">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="label-caps text-gold">{forum.area}</span>
-            <Badge className={isUpcoming
-              ? "bg-[#1e2b45] text-cream text-[10px] h-4 px-1.5 rounded"
-              : "bg-muted text-muted-foreground text-[10px] h-4 px-1.5 rounded"
-            }>
-              {isUpcoming ? "Upcoming" : "Past"}
-            </Badge>
-            {isUpcoming && (
-              <Badge className="bg-[#c8975e]/10 text-[#9a6a33] text-[10px] h-4 px-1.5 rounded border-0">
-                {RSVP_LABELS[participation.status]}
+          <button type="button" className="block w-full text-left" onClick={() => setOpen(value => !value)} aria-expanded={open}>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="label-caps text-gold">{forum.area}</span>
+              <Badge className={isUpcoming
+                ? "bg-[#1e2b45] text-cream text-[10px] h-4 px-1.5 rounded"
+                : "bg-muted text-muted-foreground text-[10px] h-4 px-1.5 rounded"
+              }>
+                {isUpcoming ? "Upcoming" : "Past"}
               </Badge>
-            )}
-          </div>
-          <h3 className="font-garamond text-lg font-medium text-foreground leading-tight">{forum.title}</h3>
+              {isUpcoming && (
+                <Badge className="bg-[#c8975e]/10 text-[#9a6a33] text-[10px] h-4 px-1.5 rounded border-0">
+                  {RSVP_LABELS[participation.status]}
+                </Badge>
+              )}
+            </div>
+            <h3 className="font-garamond text-lg font-medium text-foreground leading-tight">{forum.title}</h3>
+          </button>
           <div className="flex items-center gap-4 mt-1.5 text-muted-foreground text-xs flex-wrap">
             <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatForumDate(forum.date)}</span>
-            <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{forum.location}</span>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(forum.logistics.hotelAddress)}`}
+              target="_blank"
+              rel="noreferrer"
+              title={`Open ${forum.logistics.hotel} in Google Maps`}
+              aria-label={`Open ${forum.logistics.hotel} in Google Maps`}
+              className="flex items-center gap-1 hover:text-[#9a6a33] hover:underline transition-colors"
+            >
+              <MapPin className="w-3.5 h-3.5" />{forum.location}
+            </a>
           </div>
         </div>
-        <ChevronRight className={`w-4 h-4 text-muted-foreground flex-shrink-0 mt-1 transition-transform ${open ? "rotate-90" : ""}`} />
-      </button>
+        <button
+          type="button"
+          onClick={() => setOpen(value => !value)}
+          aria-expanded={open}
+          aria-label={`${open ? "Collapse" : "Expand"} ${forum.title}`}
+          className="p-1 -mr-1 rounded hover:bg-muted"
+        >
+          <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`} />
+        </button>
+      </div>
 
       {open && (
         <div className="border-t border-border">
@@ -234,8 +248,14 @@ function ForumDetail({ forum }: { forum: Forum }) {
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(forum.logistics.hotelAddress)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-[#9a6a33] hover:underline"
-              >{forum.logistics.hotelAddress}<ExternalLink className="w-3 h-3" /></a>
+                className="block text-xs text-muted-foreground hover:text-foreground"
+              >{forum.logistics.hotelAddress}</a>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(forum.logistics.hotelAddress)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-[#9a6a33] hover:underline"
+              >Open in Google Maps<ExternalLink className="w-3 h-3" /></a>
             </div>
             <Separator />
             <div><p className="label-caps text-muted-foreground mb-1">Dress Code</p><p>{forum.logistics.dressCode}</p></div>

@@ -5,12 +5,11 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { getAuth } from "@/lib/auth";
-import { getResolvedMember, getAllResolvedMembers } from "@/lib/store";
+import { getResolvedMember } from "@/lib/store";
 import { FORUMS } from "@/lib/data";
 import type { Member, Forum } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Mail, Globe, MapPin, Phone, Building2, Users } from "lucide-react";
+import { ArrowLeft, Mail, Globe, MapPin, Phone, Building2, Users, ExternalLink } from "lucide-react";
 
 export default function MemberProfilePage() {
   const router = useRouter();
@@ -20,19 +19,23 @@ export default function MemberProfilePage() {
   const [sharedForums, setSharedForums] = useState<Forum[]>([]);
 
   useEffect(() => {
-    const auth = getAuth();
-    if (!auth) { router.replace("/"); return; }
-    setCurrentUserId(auth.memberId);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      const auth = getAuth();
+      if (!auth) { router.replace("/"); return; }
+      setCurrentUserId(auth.memberId);
 
-    const m = getResolvedMember(id);
-    if (!m) { router.push("/directory"); return; }
-    setMember(m);
+      const resolvedMember = getResolvedMember(id);
+      if (!resolvedMember) { router.push("/directory"); return; }
+      setMember(resolvedMember);
 
-    // Find forums shared between current user and this member
-    const shared = FORUMS.filter(
-      f => f.participants.includes(auth.memberId) && f.participants.includes(id)
-    );
-    setSharedForums(shared);
+      const shared = FORUMS.filter(
+        forum => forum.participants.includes(auth.memberId) && forum.participants.includes(id),
+      );
+      setSharedForums(shared);
+    });
+    return () => { cancelled = true; };
   }, [router, id]);
 
   if (!member) return null;
@@ -207,7 +210,18 @@ export default function MemberProfilePage() {
               {member.address && (
                 <div className="flex items-start gap-2.5">
                   <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-muted-foreground leading-relaxed">{member.address}</p>
+                  <div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{member.address}</p>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(member.address)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-[#9a6a33] hover:underline"
+                    >
+                      Open in Google Maps
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
                 </div>
               )}
             </div>
