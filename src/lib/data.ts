@@ -82,6 +82,17 @@ export type Logistics = {
   notes: string;
 };
 
+export type ForumDirector = {
+  id: string;
+  name: string;
+  title: string;
+  organization: string;
+  bio: string;
+  contactEmail: string;
+  contactPhone: string;
+  avatar: string;
+};
+
 export const MEMBERS: Member[] = [
   {
     id: "m001",
@@ -385,6 +396,21 @@ export const MEMBERS: Member[] = [
   },
 ];
 
+// Cambridge staff are kept separate from forum participants so they can have
+// useful profiles without appearing to have member attendance history.
+export const FORUM_DIRECTORS: ForumDirector[] = [
+  {
+    id: "sarah-chen",
+    name: "Sarah Chen",
+    title: "Forum Director",
+    organization: "Cambridge Forums",
+    bio: "Sarah is the Cambridge Forums contact for forum attendance, travel, logistics, and materials.",
+    contactEmail: "s.chen@cambridgeforums.com",
+    contactPhone: "+1 416 703 1577 ext.305",
+    avatar: "SC",
+  },
+];
+
 // The current logged-in user (member ID m001 by default, overrideable by auth)
 export const CURRENT_USER_ID = "m001";
 
@@ -608,6 +634,14 @@ export function getForumEditionSummary(id: string): ForumEditionSummary | undefi
 
 export function getMemberById(id: string): Member | undefined {
   return MEMBERS.find((m) => m.id === id);
+}
+
+export function getForumDirectorById(id: string): ForumDirector | undefined {
+  return FORUM_DIRECTORS.find((director) => director.id === id);
+}
+
+export function getForumDirectorByEmail(email: string): ForumDirector | undefined {
+  return FORUM_DIRECTORS.find((director) => director.contactEmail.toLowerCase() === email.toLowerCase());
 }
 
 export function getForumById(id: string): Forum | undefined {
