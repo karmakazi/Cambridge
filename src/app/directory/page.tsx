@@ -192,7 +192,6 @@ function MemberCard({ member }: { member: Member }) {
             <Link href={`/directory/${member.id}`} className="font-medium text-sm text-foreground group-hover:text-[#9a6a33] transition-colors leading-tight hover:underline">{member.name}</Link>
             <div className="flex items-center gap-1 flex-shrink-0">
               {tenure.count > 0 && <Badge className="bg-[#1e2b45]/[0.07] text-[#1e2b45] text-[9px] px-1.5 h-4 border-0 font-medium">{tenure.count}-time participant</Badge>}
-              {member.steeringCommittee && <Badge className="bg-[#c8975e]/10 text-[#9a6a33] text-[9px] px-1 h-4 border-0 font-medium">SC</Badge>}
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5 truncate">{member.title}</p>

@@ -219,7 +219,7 @@ function ForumDetail({
     { id: "materials" as const, label: unseenCount ? `Materials (${unseenCount})` : "Materials", show: forum.materials.length > 0 },
     { id: "participants" as const, label: "Participants", show: true },
     { id: "logistics" as const, label: "Logistics", show: true },
-    { id: "steering" as const, label: "SC Workspace", show: member.steeringCommittee && forum.status === "upcoming" },
+    { id: "steering" as const, label: "SC Workspace", show: member.steeringCommitteeForums.includes(forum.id) && forum.status === "upcoming" },
   ].filter(item => item.show);
 
   return (

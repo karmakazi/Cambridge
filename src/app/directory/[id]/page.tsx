@@ -62,8 +62,8 @@ export default function MemberProfilePage() {
 
         {/* Profile header */}
         <div className="bg-white rounded-lg border border-border p-6 mb-4">
-          <div className="flex items-start gap-5">
-            <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
+          <div className="flex items-start gap-3 sm:gap-5">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
               {member.photo ? (
                 <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
               ) : (
@@ -73,21 +73,16 @@ export default function MemberProfilePage() {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                <div className="min-w-0">
                   <h1 className="font-garamond text-2xl font-medium text-foreground leading-tight">{member.name}</h1>
                   <p className="text-muted-foreground text-sm mt-0.5">{member.title}</p>
                   <p className="text-sm font-medium text-foreground mt-0.5">{member.organization}</p>
                 </div>
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-wrap items-center sm:flex-col sm:items-end gap-1">
                   {tenure.count > 0 && (
                     <Badge className="bg-[#1e2b45]/[0.07] text-[#1e2b45] border-0 text-[10px] font-medium">
                       {tenure.count}-time participant{tenure.firstYear ? ` · since ${tenure.firstYear}` : ""}
-                    </Badge>
-                  )}
-                  {member.steeringCommittee && (
-                    <Badge className="bg-[#c8975e]/10 text-[#c8975e] border-0 text-[10px] font-medium">
-                      Steering Committee
                     </Badge>
                   )}
                   {isOwnProfile && (
@@ -130,12 +125,19 @@ export default function MemberProfilePage() {
           <div className="space-y-2">
             {forumHistory.map(edition => {
               return (
-                <div key={edition.id} className="flex items-center justify-between py-1.5">
-                  <div>
+                <div key={edition.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-1.5">
+                  <div className="min-w-0">
                     <p className="text-sm text-foreground">{edition.title}</p>
                     <p className="text-xs text-muted-foreground">{edition.location}</p>
                   </div>
-                  <span className="text-xs text-muted-foreground">{edition.year}</span>
+                  <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
+                    <span className="text-xs text-muted-foreground">{edition.year}</span>
+                    {member.steeringCommitteeForums.includes(edition.id) && (
+                      <Badge className="bg-[#c8975e]/10 text-[#9a6a33] border-0 text-[9px] font-medium">
+                        Steering Committee
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               );
             })}
