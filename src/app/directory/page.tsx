@@ -9,6 +9,7 @@ import type { Forum, Member } from "@/lib/data";
 import {
   getDirectoryForums,
   getDirectoryMembers,
+  getMemberTenure,
   type DirectoryScope,
 } from "@/lib/prototype-service";
 import { Input } from "@/components/ui/input";
@@ -175,6 +176,7 @@ export default function DirectoryPage() {
 }
 
 function MemberCard({ member }: { member: Member }) {
+  const tenure = getMemberTenure(member);
   return (
     <article className="bg-white rounded-lg border border-border p-4 hover:border-[#c8975e]/50 hover:bg-[#c8975e]/[0.02] transition-all group">
       <div className="flex items-start gap-3">
@@ -186,9 +188,12 @@ function MemberCard({ member }: { member: Member }) {
           )}
         </Link>
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-1">
+          <div className="flex items-start justify-between gap-2">
             <Link href={`/directory/${member.id}`} className="font-medium text-sm text-foreground group-hover:text-[#9a6a33] transition-colors leading-tight hover:underline">{member.name}</Link>
-            {member.steeringCommittee && <Badge className="bg-[#c8975e]/10 text-[#9a6a33] text-[9px] px-1 h-4 flex-shrink-0 border-0 font-medium">SC</Badge>}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {tenure.count > 0 && <Badge className="bg-[#1e2b45]/[0.07] text-[#1e2b45] text-[9px] px-1.5 h-4 border-0 font-medium">{tenure.count}-time participant</Badge>}
+              {member.steeringCommittee && <Badge className="bg-[#c8975e]/10 text-[#9a6a33] text-[9px] px-1 h-4 border-0 font-medium">SC</Badge>}
+            </div>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5 truncate">{member.title}</p>
           <p className="text-xs text-muted-foreground truncate">{member.organization}</p>

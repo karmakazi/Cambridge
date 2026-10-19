@@ -6,8 +6,9 @@ import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { getAuth } from "@/lib/auth";
 import { getResolvedMember } from "@/lib/store";
-import { FORUMS } from "@/lib/data";
+import { FORUMS, getForumEditionSummary } from "@/lib/data";
 import type { Member, Forum } from "@/lib/data";
+import { getForumHistory, getMemberTenure } from "@/lib/prototype-service";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Mail, Globe, MapPin, Phone, Building2, Users, ExternalLink } from "lucide-react";
 
@@ -30,9 +31,16 @@ export default function MemberProfilePage() {
       if (!resolvedMember) { router.push("/directory"); return; }
       setMember(resolvedMember);
 
-      const shared = FORUMS.filter(
-        forum => forum.participants.includes(auth.memberId) && forum.participants.includes(id),
-      );
+      const currentMember = getResolvedMember(auth.memberId);
+      const currentPrograms = new Set((currentMember?.forumsAttended ?? []).map(fid => getForumEditionSummary(fid)?.programId));
+      const profilePrograms = new Set(resolvedMember.forumsAttended.map(fid => getForumEditionSummary(fid)?.programId));
+      const sharedProgramIds = new Set([...currentPrograms].filter(programId => programId && profilePrograms.has(programId)));
+      const seenPrograms = new Set<string>();
+      const shared = FORUMS.filter(forum => {
+        if (!sharedProgramIds.has(forum.programId) || seenPrograms.has(forum.programId)) return false;
+        seenPrograms.add(forum.programId);
+        return true;
+      });
       setSharedForums(shared);
     });
     return () => { cancelled = true; };
@@ -40,6 +48,8 @@ export default function MemberProfilePage() {
 
   if (!member) return null;
   const isOwnProfile = currentUserId === member.id;
+  const tenure = getMemberTenure(member);
+  const forumHistory = getForumHistory(member);
 
   return (
     <AppShell>
@@ -70,6 +80,11 @@ export default function MemberProfilePage() {
                   <p className="text-sm font-medium text-foreground mt-0.5">{member.organization}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
+                  {tenure.count > 0 && (
+                    <Badge className="bg-[#1e2b45]/[0.07] text-[#1e2b45] border-0 text-[10px] font-medium">
+                      {tenure.count}-time participant{tenure.firstYear ? ` · since ${tenure.firstYear}` : ""}
+                    </Badge>
+                  )}
                   {member.steeringCommittee && (
                     <Badge className="bg-[#c8975e]/10 text-[#c8975e] border-0 text-[10px] font-medium">
                       Steering Committee
@@ -113,17 +128,14 @@ export default function MemberProfilePage() {
         <div className="bg-white rounded-lg border border-border px-6 py-5 mb-4">
           <h2 className="font-garamond text-base font-medium text-foreground mb-3">Forum Participation</h2>
           <div className="space-y-2">
-            {member.forumsAttended.map(fid => {
-              const forum = FORUMS.find(f => f.id === fid);
-              if (!forum) return null;
-              const dateStr = new Intl.DateTimeFormat("en-GB", { month: "short", year: "numeric" }).format(new Date(forum.date));
+            {forumHistory.map(edition => {
               return (
-                <div key={fid} className="flex items-center justify-between py-1.5">
+                <div key={edition.id} className="flex items-center justify-between py-1.5">
                   <div>
-                    <p className="text-sm text-foreground">{forum.title}</p>
-                    <p className="text-xs text-muted-foreground">{forum.location}</p>
+                    <p className="text-sm text-foreground">{edition.title}</p>
+                    <p className="text-xs text-muted-foreground">{edition.location}</p>
                   </div>
-                  <span className="text-xs text-muted-foreground">{dateStr}</span>
+                  <span className="text-xs text-muted-foreground">{edition.year}</span>
                 </div>
               );
             })}
@@ -141,12 +153,11 @@ export default function MemberProfilePage() {
             </h2>
             <div className="space-y-2">
               {sharedForums.map(f => {
-                const dateStr = new Intl.DateTimeFormat("en-GB", { month: "short", year: "numeric" }).format(new Date(f.date));
                 return (
                   <div key={f.id} className="flex items-center justify-between py-1">
                     <p className="text-sm text-foreground">{f.title}</p>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">{dateStr}</span>
+                      <span className="text-xs text-muted-foreground">Latest edition: {f.editionYear}</span>
                       {f.status === "upcoming" && (
                         <Badge className="bg-[#1e2b45] text-cream text-[9px] px-1 h-4">Upcoming</Badge>
                       )}

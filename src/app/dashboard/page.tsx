@@ -5,20 +5,28 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { getAuth } from "@/lib/auth";
-import { getForumsForMember, type Forum, type Member } from "@/lib/data";
+import { getForumsForMember, type AgendaItem, type Forum, type Material, type Member } from "@/lib/data";
 import { getResolvedMember } from "@/lib/store";
 import {
-  formatForumDate,
+  addSteeringCommitteeNote,
+  formatForumDateRange,
+  getCalendarFileUrl,
+  getGoogleCalendarUrl,
   getForumParticipation,
+  getSteeringCommitteeNotes,
+  getUnseenMaterialCount,
+  isMaterialUnseen,
+  markMaterialSeen,
   submitRsvp,
   type ForumParticipation,
   type RsvpStatus,
+  type SteeringCommitteeNote,
 } from "@/lib/prototype-service";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  Calendar, CheckCircle2, ChevronRight, CircleHelp, Download,
-  ExternalLink, Loader2, MapPin, Users, XCircle,
+  Calendar, CalendarPlus, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Download,
+  ExternalLink, Eye, FileText, Loader2, Mail, MapPin, MessageSquare, Send, UserRound, Users, XCircle,
 } from "lucide-react";
 
 const RSVP_OPTIONS: Array<{ value: RsvpStatus; label: string }> = [
@@ -34,13 +42,15 @@ const RSVP_LABELS: Record<RsvpStatus, string> = {
   declined: "Not attending",
 };
 
-function ForumCard({ forum, memberId }: { forum: Forum; memberId: string }) {
+function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
+  const memberId = member.id;
   const [open, setOpen] = useState(false);
   const [participation, setParticipation] = useState<ForumParticipation>(() => getForumParticipation(forum, memberId));
   const [selectedStatus, setSelectedStatus] = useState<RsvpStatus>(participation.status);
   const [comment, setComment] = useState(participation.comment);
   const [saving, setSaving] = useState(false);
   const [confirmation, setConfirmation] = useState("");
+  const [unseenCount, setUnseenCount] = useState(() => getUnseenMaterialCount(memberId, forum));
   const isUpcoming = forum.status === "upcoming";
 
   async function handleRsvp() {
@@ -70,11 +80,16 @@ function ForumCard({ forum, memberId }: { forum: Forum; memberId: string }) {
                   {RSVP_LABELS[participation.status]}
                 </Badge>
               )}
+              {unseenCount > 0 && participation.canAccessResources && (
+                <Badge className="bg-[#9a6a33] text-white text-[10px] h-4 px-1.5 rounded border-0">
+                  {unseenCount} new
+                </Badge>
+              )}
             </div>
             <h3 className="font-garamond text-lg font-medium text-foreground leading-tight">{forum.title}</h3>
           </button>
-          <div className="flex items-center gap-4 mt-1.5 text-muted-foreground text-xs flex-wrap">
-            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatForumDate(forum.date)}</span>
+          <div className="flex items-center gap-x-4 gap-y-1 mt-1.5 text-muted-foreground text-xs flex-wrap">
+            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatForumDateRange(forum)} · {forum.startTime}–{forum.endTime}</span>
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(forum.logistics.hotelAddress)}`}
               target="_blank"
@@ -83,9 +98,10 @@ function ForumCard({ forum, memberId }: { forum: Forum; memberId: string }) {
               aria-label={`Open ${forum.logistics.hotel} in Google Maps`}
               className="flex items-center gap-1 hover:text-[#9a6a33] hover:underline transition-colors"
             >
-              <MapPin className="w-3.5 h-3.5" />{forum.location}
+              <MapPin className="w-3.5 h-3.5" />{forum.logistics.hotel} · {forum.location}
             </a>
           </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">Forum Director: <a href={`mailto:${forum.logistics.contactEmail}`} className="font-medium text-[#76502a] hover:underline">{forum.logistics.contactName}</a></p>
         </div>
         <button
           type="button"
@@ -154,7 +170,12 @@ function ForumCard({ forum, memberId }: { forum: Forum; memberId: string }) {
           )}
 
           {participation.canAccessResources ? (
-            <ForumDetail forum={forum} />
+            <ForumDetail
+              forum={forum}
+              member={member}
+              unseenCount={unseenCount}
+              onMaterialSeen={() => setUnseenCount(count => Math.max(0, count - 1))}
+            />
           ) : (
             <div className="px-6 py-7 text-center">
               {participation.status === "declined"
@@ -170,17 +191,45 @@ function ForumCard({ forum, memberId }: { forum: Forum; memberId: string }) {
   );
 }
 
-function ForumDetail({ forum }: { forum: Forum }) {
-  const [tab, setTab] = useState<"agenda" | "materials" | "participants" | "logistics">("agenda");
+type ForumTab = "agenda" | "materials" | "participants" | "logistics" | "steering";
+
+function ForumDetail({
+  forum,
+  member,
+  unseenCount,
+  onMaterialSeen,
+}: {
+  forum: Forum;
+  member: Member;
+  unseenCount: number;
+  onMaterialSeen: () => void;
+}) {
+  const [tab, setTab] = useState<ForumTab>("agenda");
   const tabs = [
     { id: "agenda" as const, label: "Agenda", show: forum.agenda.length > 0 },
-    { id: "materials" as const, label: "Materials", show: forum.materials.length > 0 },
+    { id: "materials" as const, label: unseenCount ? `Materials (${unseenCount})` : "Materials", show: forum.materials.length > 0 },
     { id: "participants" as const, label: "Participants", show: true },
     { id: "logistics" as const, label: "Logistics", show: true },
+    { id: "steering" as const, label: "SC Workspace", show: member.steeringCommittee && forum.status === "upcoming" },
   ].filter(item => item.show);
 
   return (
     <div>
+      <div className="mx-6 mt-5 rounded-lg border border-[#c8975e]/30 bg-[#c8975e]/[0.06] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-[#1e2b45] text-cream flex items-center justify-center flex-shrink-0"><UserRound className="w-4 h-4" /></div>
+          <div>
+            <p className="label-caps text-[#9a6a33]">Your Forum Director</p>
+            <p className="text-sm font-medium">{forum.logistics.contactName}</p>
+            <p className="text-xs text-muted-foreground">Questions about attendance, travel, or materials</p>
+          </div>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <a href={`mailto:${forum.logistics.contactEmail}`} className="h-8 px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"><Mail className="w-3.5 h-3.5" />Email</a>
+          <a href={getGoogleCalendarUrl(forum)} target="_blank" rel="noreferrer" className="h-8 px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"><CalendarPlus className="w-3.5 h-3.5" />Google</a>
+          <a href={getCalendarFileUrl(forum)} download={`${forum.title}-${forum.editionYear}.ics`} className="h-8 px-3 rounded-md bg-[#1e2b45] text-cream text-xs font-medium inline-flex items-center gap-1.5 hover:bg-[#293a5b]"><CalendarPlus className="w-3.5 h-3.5" />Outlook / Apple</a>
+        </div>
+      </div>
       <div className="flex border-b border-border px-6 overflow-x-auto">
         {tabs.map(item => (
           <button
@@ -196,19 +245,28 @@ function ForumDetail({ forum }: { forum: Forum }) {
 
       <div className="px-6 py-5">
         {tab === "agenda" && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {forum.agenda.map((item, index) => (
-              <div key={`${item.time}-${index}`} className="flex gap-4">
-                <span className="text-xs text-muted-foreground font-mono w-12 flex-shrink-0 pt-0.5">{item.time}</span>
-                <div>
-                  <p className="text-sm font-medium text-foreground">{item.title}</p>
-                  {item.description && <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>}
-                  {item.speaker && (item.speakerMemberId ? (
-                    <Link href={`/directory/${item.speakerMemberId}`} className="inline-flex items-center gap-1 text-xs text-[#9a6a33] mt-0.5 hover:underline">
-                      {item.speaker}<ChevronRight className="w-3 h-3" />
-                    </Link>
-                  ) : <p className="text-xs text-[#9a6a33] mt-0.5">{item.speaker}</p>)}
+              <div key={`${item.time}-${index}`} className="border-b border-border last:border-0 pb-3 last:pb-0">
+                <div className="hidden sm:flex gap-4">
+                  <span className="text-xs text-muted-foreground font-mono w-12 flex-shrink-0 pt-0.5">{item.time}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">{item.title}</p>
+                    {item.description && <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>}
+                    <AgendaLinks item={item} />
+                  </div>
                 </div>
+                <details className="sm:hidden group">
+                  <summary className="list-none flex items-start gap-3 cursor-pointer">
+                    <span className="text-[11px] text-muted-foreground font-mono w-11 flex-shrink-0 pt-0.5">{item.time}</span>
+                    <span className="text-sm font-medium flex-1">{item.title}</span>
+                    <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="pl-14 pr-5 pt-2">
+                    {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
+                    <AgendaLinks item={item} />
+                  </div>
+                </details>
               </div>
             ))}
           </div>
@@ -221,23 +279,14 @@ function ForumDetail({ forum }: { forum: Forum }) {
                 <Download className="w-3.5 h-3.5" />Download all
               </a>
             </div>
-            <div className="space-y-2">
-              {forum.materials.map(material => (
-                <div key={material.id} className="flex items-center justify-between gap-4 py-2.5 border-b border-border last:border-0">
-                  <div>
-                    <p className="text-sm text-foreground">{material.title}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{material.type} · {material.size}</p>
-                  </div>
-                  <a href={material.url} download className="flex items-center gap-1.5 text-xs text-[#1e2b45] hover:text-[#9a6a33] font-medium transition-colors">
-                    <Download className="w-3.5 h-3.5" />Download
-                  </a>
-                </div>
-              ))}
-            </div>
+            <MaterialGroup title="Required pre-reading" description="Please review these items before the Forum." materials={forum.materials.filter(material => material.category === "required")} memberId={member.id} onMaterialSeen={onMaterialSeen} required />
+            <MaterialGroup title="Supplementary materials" description="Optional background and reference material." materials={forum.materials.filter(material => material.category === "supplementary")} memberId={member.id} onMaterialSeen={onMaterialSeen} />
           </div>
         )}
 
         {tab === "participants" && <ParticipantList participantIds={forum.participants} />}
+
+        {tab === "steering" && <SteeringCommitteeWorkspace forum={forum} member={member} />}
 
         {tab === "logistics" && (
           <div className="space-y-3 text-sm">
@@ -273,6 +322,125 @@ function ForumDetail({ forum }: { forum: Forum }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function AgendaLinks({ item }: { item: AgendaItem }) {
+  return (
+    <>
+      {item.speaker && (item.speakerMemberId ? (
+        <Link href={`/directory/${item.speakerMemberId}`} className="inline-flex items-center gap-1 text-xs text-[#9a6a33] mt-1 hover:underline">
+          {item.speaker}<ChevronRight className="w-3 h-3" />
+        </Link>
+      ) : <p className="text-xs text-[#9a6a33] mt-1">{item.speaker}</p>)}
+      {item.venueAddress && (
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.venueAddress)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-start gap-1.5 mt-1 text-xs text-[#9a6a33] hover:underline"
+        >
+          <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
+          <span>{item.venueName} · {item.venueAddress}</span>
+        </a>
+      )}
+    </>
+  );
+}
+
+function MaterialGroup({
+  title,
+  description,
+  materials,
+  memberId,
+  onMaterialSeen,
+  required = false,
+}: {
+  title: string;
+  description: string;
+  materials: Material[];
+  memberId: string;
+  onMaterialSeen: () => void;
+  required?: boolean;
+}) {
+  const [seenInSession, setSeenInSession] = useState<Set<string>>(() => new Set());
+  if (!materials.length) return null;
+  return (
+    <section className={`mb-5 last:mb-0 rounded-lg ${required ? "border border-[#c8975e]/35 bg-[#c8975e]/[0.055]" : "border border-border"}`}>
+      <div className="px-4 py-3 border-b border-inherit">
+        <div className="flex items-center gap-2">
+          <FileText className={`w-4 h-4 ${required ? "text-[#9a6a33]" : "text-muted-foreground"}`} />
+          <h3 className="font-garamond text-base font-medium">{title}</h3>
+          {required && <Badge className="bg-[#9a6a33] text-white border-0 text-[9px] h-4">Required</Badge>}
+        </div>
+        <p className="text-xs text-muted-foreground mt-0.5 ml-6">{description}</p>
+      </div>
+      <div className="px-4">
+        {materials.map(material => {
+          const unseen = !seenInSession.has(material.id) && isMaterialUnseen(memberId, material);
+          return (
+            <div key={material.id} className="flex items-center justify-between gap-4 py-3 border-b border-border last:border-0">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm text-foreground">{material.title}</p>
+                  {unseen && <Badge className="bg-[#1e2b45] text-cream border-0 text-[9px] h-4">{material.revision > 1 ? "Updated" : "New"}</Badge>}
+                </div>
+                <p className="text-xs text-muted-foreground capitalize">{material.type} · {material.size} · Added {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(new Date(`${material.publishedAt}T12:00:00`))}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (unseen) {
+                    markMaterialSeen(memberId, material);
+                    setSeenInSession(current => new Set(current).add(material.id));
+                    onMaterialSeen();
+                  }
+                  window.open(material.url, "_blank", "noopener,noreferrer");
+                }}
+                className="flex items-center gap-1.5 text-xs text-[#1e2b45] hover:text-[#9a6a33] font-medium transition-colors flex-shrink-0"
+              >
+                {unseen ? <Eye className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}{unseen ? "Open" : "Download"}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function SteeringCommitteeWorkspace({ forum, member }: { forum: Forum; member: Member }) {
+  const [notes, setNotes] = useState<SteeringCommitteeNote[]>(() => getSteeringCommitteeNotes(forum.id));
+  const [draft, setDraft] = useState("");
+
+  function postNote() {
+    if (!draft.trim()) return;
+    const note = addSteeringCommitteeNote(forum.id, member.id, draft);
+    setNotes(current => [note, ...current]);
+    setDraft("");
+  }
+
+  return (
+    <div>
+      <div className="rounded-lg bg-[#1e2b45] text-cream p-4 mb-4">
+        <div className="flex items-center gap-2"><MessageSquare className="w-4 h-4 text-[#d4aa7a]" /><p className="text-sm font-medium">Private Steering Committee workspace</p></div>
+        <p className="text-xs text-cream/65 mt-1">A lightweight concept for sharing session ideas, candidate notes, and working documents between meetings.</p>
+      </div>
+      <div className="flex gap-2 mb-4">
+        <textarea value={draft} onChange={event => setDraft(event.target.value)} rows={2} placeholder="Suggest a session idea or leave a note for the committee…" className="flex-1 text-sm rounded-md border border-input bg-white px-3 py-2 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none" />
+        <button type="button" onClick={postNote} disabled={!draft.trim()} className="self-end h-9 px-3 rounded-md bg-[#1e2b45] text-cream text-xs font-medium disabled:opacity-50 inline-flex items-center gap-1.5"><Send className="w-3.5 h-3.5" />Post</button>
+      </div>
+      <div className="rounded-lg border border-border p-3 mb-3 flex items-center justify-between gap-3">
+        <div><p className="text-sm font-medium">Draft 2026 discussion themes</p><p className="text-xs text-muted-foreground">Working document · Updated 14 October</p></div>
+        <a href="/materials/prototype-resource.txt" download className="text-xs font-medium text-[#9a6a33] inline-flex items-center gap-1"><Download className="w-3.5 h-3.5" />Download</a>
+      </div>
+      {notes.length ? notes.map(note => (
+        <div key={note.id} className="border-b border-border py-3 last:border-0">
+          <p className="text-sm">{note.text}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">{member.name} · just now</p>
+        </div>
+      )) : <p className="text-xs text-muted-foreground text-center py-5">No committee notes yet. Add the first idea above.</p>}
     </div>
   );
 }
@@ -334,14 +502,14 @@ export default function DashboardPage() {
               <h2 className="font-garamond text-xl font-medium">Upcoming Forums</h2>
               <span className="bg-[#1e2b45] text-cream text-[10px] px-1.5 py-0.5 rounded font-medium">{upcoming.length}</span>
             </div>
-            <div className="space-y-3">{upcoming.map(forum => <ForumCard key={forum.id} forum={forum} memberId={member.id} />)}</div>
+            <div className="space-y-3">{upcoming.map(forum => <ForumCard key={forum.id} forum={forum} member={member} />)}</div>
           </section>
         )}
 
         {past.length > 0 && (
           <section>
             <h2 className="font-garamond text-xl font-medium mb-3">Past Forums</h2>
-            <div className="space-y-3">{past.map(forum => <ForumCard key={forum.id} forum={forum} memberId={member.id} />)}</div>
+            <div className="space-y-3">{past.map(forum => <ForumCard key={forum.id} forum={forum} member={member} />)}</div>
           </section>
         )}
 

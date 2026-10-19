@@ -21,9 +21,15 @@ export type Member = {
 
 export type Forum = {
   id: string;
+  programId: string;
   title: string;
   area: string;
-  date: string;
+  editionYear: number;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  timeZone: string;
   location: string;
   venue: string;
   status: "upcoming" | "past";
@@ -43,6 +49,8 @@ export type AgendaItem = {
   description: string;
   speaker?: string;
   speakerMemberId?: string;
+  venueName?: string;
+  venueAddress?: string;
 };
 
 export type Material = {
@@ -51,6 +59,17 @@ export type Material = {
   type: "pdf" | "slides" | "reading";
   size: string;
   url: string;
+  category: "required" | "supplementary";
+  publishedAt: string;
+  revision: number;
+};
+
+export type ForumEditionSummary = {
+  id: string;
+  programId: string;
+  title: string;
+  year: number;
+  location: string;
 };
 
 export type Logistics = {
@@ -372,9 +391,15 @@ export const CURRENT_USER_ID = "m001";
 export const FORUMS: Forum[] = [
   {
     id: "f001",
+    programId: "competition-europe",
     title: "Annual European Competition Forum",
     area: "Antitrust",
-    date: "2026-11-14",
+    editionYear: 2026,
+    startDate: "2026-11-14",
+    endDate: "2026-11-15",
+    startTime: "09:00",
+    endTime: "16:30",
+    timeZone: "Europe/Brussels",
     location: "Brussels, Belgium",
     venue: "Hotel Amigo",
     status: "upcoming",
@@ -391,12 +416,12 @@ export const FORUMS: Forum[] = [
       { time: "13:00", title: "Lunch", description: "Hosted lunch at the hotel. Informal networking." },
       { time: "14:30", title: "State Aid in the Green Transition", description: "Examining how energy subsidies and ESG incentives interact with EU state aid rules.", speaker: "Panel" },
       { time: "16:00", title: "Closing Discussion & Wrap-up", description: "Chair's summary and forward look.", speaker: "Elena Marchetti", speakerMemberId: "m001" },
-      { time: "19:30", title: "Dinner", description: "Private dinner at Brasserie La Maison du Cygne." },
+      { time: "19:30", title: "Dinner", description: "Private dinner at Brasserie La Maison du Cygne.", venueName: "La Maison du Cygne", venueAddress: "Grand Place 9, 1000 Brussels, Belgium" },
     ],
     materials: [
-      { id: "mat001", title: "DMA Enforcement Summary — Oct 2026", type: "pdf", size: "1.2 MB", url: "/materials/prototype-resource.txt" },
-      { id: "mat002", title: "Merger Control Trends Q3 2026", type: "pdf", size: "890 KB", url: "/materials/prototype-resource.txt" },
-      { id: "mat003", title: "Pre-reading: State Aid & Green Deal", type: "reading", size: "340 KB", url: "/materials/prototype-resource.txt" },
+      { id: "mat001", title: "DMA Enforcement Summary — Oct 2026", type: "pdf", size: "1.2 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-12", revision: 1 },
+      { id: "mat002", title: "Merger Control Trends Q3 2026", type: "pdf", size: "890 KB", url: "/materials/prototype-resource.txt", category: "supplementary", publishedAt: "2026-10-08", revision: 2 },
+      { id: "mat003", title: "State Aid & Green Deal briefing", type: "reading", size: "340 KB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-15", revision: 1 },
     ],
     logistics: {
       hotel: "Hotel Amigo",
@@ -410,9 +435,15 @@ export const FORUMS: Forum[] = [
   },
   {
     id: "f002",
+    programId: "private-capital-markets",
     title: "Private Capital Markets Forum",
     area: "Private Capital Markets",
-    date: "2026-12-04",
+    editionYear: 2026,
+    startDate: "2026-12-04",
+    endDate: "2026-12-05",
+    startTime: "09:00",
+    endTime: "16:30",
+    timeZone: "Europe/London",
     location: "London, United Kingdom",
     venue: "The Ned",
     status: "upcoming",
@@ -431,8 +462,8 @@ export const FORUMS: Forum[] = [
       { time: "16:30", title: "Closing Remarks", description: "", speaker: "James Okafor", speakerMemberId: "m002" },
     ],
     materials: [
-      { id: "mat004", title: "Global PE Market Update Q3 2026", type: "pdf", size: "2.1 MB", url: "/materials/prototype-resource.txt" },
-      { id: "mat005", title: "Continuation Fund Structures — Deck", type: "slides", size: "4.3 MB", url: "/materials/prototype-resource.txt" },
+      { id: "mat004", title: "Global PE Market Update Q3 2026", type: "pdf", size: "2.1 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-11-20", revision: 1 },
+      { id: "mat005", title: "Continuation Fund Structures — Deck", type: "slides", size: "4.3 MB", url: "/materials/prototype-resource.txt", category: "supplementary", publishedAt: "2026-11-25", revision: 1 },
     ],
     logistics: {
       hotel: "The Ned",
@@ -446,9 +477,15 @@ export const FORUMS: Forum[] = [
   },
   {
     id: "f003",
+    programId: "privacy-ai-governance",
     title: "Data Privacy & AI Governance Forum",
     area: "Privacy, Data & Cyber Security",
-    date: "2026-10-22",
+    editionYear: 2026,
+    startDate: "2026-10-22",
+    endDate: "2026-10-23",
+    startTime: "09:00",
+    endTime: "16:30",
+    timeZone: "Europe/Amsterdam",
     location: "Amsterdam, Netherlands",
     venue: "Pulitzer Amsterdam",
     status: "upcoming",
@@ -466,9 +503,9 @@ export const FORUMS: Forum[] = [
       { time: "16:30", title: "Closing", description: "", speaker: "Priya Anand", speakerMemberId: "m003" },
     ],
     materials: [
-      { id: "mat006", title: "EU AI Act — Compliance Roadmap", type: "pdf", size: "1.8 MB", url: "/materials/prototype-resource.txt" },
-      { id: "mat007", title: "SCCs Practical Guide 2026", type: "pdf", size: "920 KB", url: "/materials/prototype-resource.txt" },
-      { id: "mat008", title: "Incident Response Simulation Brief", type: "pdf", size: "440 KB", url: "/materials/prototype-resource.txt" },
+      { id: "mat006", title: "EU AI Act — Compliance Roadmap", type: "pdf", size: "1.8 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-05", revision: 1 },
+      { id: "mat007", title: "SCCs Practical Guide 2026", type: "pdf", size: "920 KB", url: "/materials/prototype-resource.txt", category: "supplementary", publishedAt: "2026-10-07", revision: 1 },
+      { id: "mat008", title: "Incident Response Simulation Brief", type: "pdf", size: "440 KB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-14", revision: 1 },
     ],
     logistics: {
       hotel: "Pulitzer Amsterdam",
@@ -482,9 +519,15 @@ export const FORUMS: Forum[] = [
   },
   {
     id: "f004",
-    title: "Antitrust & Enforcement Roundtable",
+    programId: "competition-europe",
+    title: "Annual European Competition Forum",
     area: "Antitrust",
-    date: "2025-09-18",
+    editionYear: 2025,
+    startDate: "2025-09-18",
+    endDate: "2025-09-19",
+    startTime: "09:00",
+    endTime: "16:00",
+    timeZone: "America/New_York",
     location: "Washington D.C., USA",
     venue: "St. Regis Washington",
     status: "past",
@@ -495,8 +538,8 @@ export const FORUMS: Forum[] = [
     memberFees: {},
     agenda: [],
     materials: [
-      { id: "mat009", title: "Forum Summary & Key Themes", type: "pdf", size: "680 KB", url: "/materials/prototype-resource.txt" },
-      { id: "mat010", title: "DOJ Antitrust Division — Enforcement Trends", type: "pdf", size: "1.1 MB", url: "/materials/prototype-resource.txt" },
+      { id: "mat009", title: "Forum Summary & Key Themes", type: "pdf", size: "680 KB", url: "/materials/prototype-resource.txt", category: "supplementary", publishedAt: "2025-09-22", revision: 1 },
+      { id: "mat010", title: "DOJ Antitrust Division — Enforcement Trends", type: "pdf", size: "1.1 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2025-09-01", revision: 1 },
     ],
     logistics: {
       hotel: "St. Regis Washington D.C.",
@@ -510,9 +553,15 @@ export const FORUMS: Forum[] = [
   },
   {
     id: "f005",
+    programId: "family-office-private-wealth",
     title: "Family Office & Private Wealth Forum",
     area: "Family Office",
-    date: "2025-06-12",
+    editionYear: 2025,
+    startDate: "2025-06-12",
+    endDate: "2025-06-13",
+    startTime: "09:00",
+    endTime: "16:00",
+    timeZone: "Europe/Zurich",
     location: "Geneva, Switzerland",
     venue: "Beau-Rivage Hotel",
     status: "past",
@@ -523,8 +572,8 @@ export const FORUMS: Forum[] = [
     memberFees: {},
     agenda: [],
     materials: [
-      { id: "mat011", title: "Forum Summary — June 2025", type: "pdf", size: "720 KB", url: "/materials/prototype-resource.txt" },
-      { id: "mat012", title: "Global Wealth Structures Outlook", type: "slides", size: "3.2 MB", url: "/materials/prototype-resource.txt" },
+      { id: "mat011", title: "Forum Summary — June 2025", type: "pdf", size: "720 KB", url: "/materials/prototype-resource.txt", category: "supplementary", publishedAt: "2025-06-17", revision: 1 },
+      { id: "mat012", title: "Global Wealth Structures Outlook", type: "slides", size: "3.2 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2025-05-29", revision: 1 },
     ],
     logistics: {
       hotel: "Beau-Rivage Hotel",
@@ -537,6 +586,25 @@ export const FORUMS: Forum[] = [
     },
   },
 ];
+
+// Lightweight history records stand in for the eventual CRM attendance feed.
+export const FORUM_EDITION_HISTORY: ForumEditionSummary[] = [
+  ...FORUMS.map(forum => ({
+    id: forum.id,
+    programId: forum.programId,
+    title: forum.title,
+    year: forum.editionYear,
+    location: forum.location,
+  })),
+  { id: "f006", programId: "privacy-ai-governance", title: "Data Privacy & AI Governance Forum", year: 2025, location: "The Hague, Netherlands" },
+  { id: "f007", programId: "competition-europe", title: "Annual European Competition Forum", year: 2024, location: "Paris, France" },
+  { id: "f008", programId: "family-office-private-wealth", title: "Family Office & Private Wealth Forum", year: 2024, location: "London, United Kingdom" },
+  { id: "f009", programId: "private-capital-markets", title: "Private Capital Markets Forum", year: 2024, location: "New York, USA" },
+];
+
+export function getForumEditionSummary(id: string): ForumEditionSummary | undefined {
+  return FORUM_EDITION_HISTORY.find(edition => edition.id === id);
+}
 
 export function getMemberById(id: string): Member | undefined {
   return MEMBERS.find((m) => m.id === id);
