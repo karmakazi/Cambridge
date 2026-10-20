@@ -425,7 +425,7 @@ function MaterialGroup({
                 }}
                 className="flex items-center gap-1.5 text-xs text-[#1e2b45] hover:text-[#9a6a33] font-medium transition-colors flex-shrink-0"
               >
-                {unseen ? <Eye className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}{unseen ? "Open" : "Download"}
+                <Eye className="w-3.5 h-3.5" />Open
               </button>
             </div>
           );
