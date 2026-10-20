@@ -41,6 +41,10 @@ const RSVP_LABELS: Record<RsvpStatus, string> = {
   declined: "Not attending",
 };
 
+// Keep the prototype implementation available for a later review round without
+// exposing the Steering Committee workspace in the current client build.
+const SHOW_STEERING_COMMITTEE_WORKSPACE = false;
+
 function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
   const memberId = member.id;
   const [open, setOpen] = useState(false);
@@ -227,7 +231,13 @@ function ForumDetail({
     { id: "materials" as const, label: unseenCount ? `Materials (${unseenCount})` : "Materials", show: forum.materials.length > 0 },
     { id: "participants" as const, label: "Participants", show: true },
     { id: "logistics" as const, label: "Logistics", show: true },
-    { id: "steering" as const, label: "SC Workspace", show: member.steeringCommitteeForums.includes(forum.id) && forum.status === "upcoming" },
+    {
+      id: "steering" as const,
+      label: "SC Workspace",
+      show: SHOW_STEERING_COMMITTEE_WORKSPACE
+        && member.steeringCommitteeForums.includes(forum.id)
+        && forum.status === "upcoming",
+    },
   ].filter(item => item.show);
 
   return (
