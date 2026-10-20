@@ -250,8 +250,9 @@ function ForumDetail({
           <a href={`mailto:${forum.logistics.contactEmail}`} className="h-8 px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"><Mail className="w-3.5 h-3.5" />Email</a>
           <a
             href={`mailto:${forum.logistics.contactEmail}?subject=${encodeURIComponent(`Meeting request: ${forum.title}`)}&body=${encodeURIComponent(`Hello ${forum.logistics.contactName},\n\nI would like to arrange a meeting regarding ${forum.title}.\n\nThank you.`)}`}
+            title="Email the Forum Director to request a meeting"
             className="h-8 px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"
-          ><CalendarPlus className="w-3.5 h-3.5" />Book a meeting</a>
+          ><CalendarPlus className="w-3.5 h-3.5" />Request a meeting</a>
         </div>
       </div>
       <div className="flex max-w-full border-b border-border px-4 sm:px-6 overflow-x-auto overscroll-x-contain">
