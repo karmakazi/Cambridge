@@ -11,7 +11,6 @@ import {
   addSteeringCommitteeNote,
   formatForumDateRange,
   getCalendarFileUrl,
-  getGoogleCalendarUrl,
   getForumParticipation,
   getSteeringCommitteeNotes,
   getUnseenMaterialCount,
@@ -83,7 +82,7 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
               )}
               {unseenCount > 0 && participation.canAccessResources && (
                 <Badge className="bg-[#9a6a33] text-white text-[10px] h-4 px-1.5 rounded border-0">
-                  {unseenCount} new
+                  {unseenCount} new {unseenCount === 1 ? "document" : "documents"}
                 </Badge>
               )}
             </div>
@@ -110,6 +109,15 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
               <a href={`mailto:${forum.logistics.contactEmail}`} className="font-medium text-[#76502a] hover:underline">{forum.logistics.contactName}</a>
             )}
           </p>
+          {isUpcoming && (
+            <a
+              href={getCalendarFileUrl(forum)}
+              download={`${forum.title}-${forum.editionYear}.ics`}
+              className="mt-2 h-8 w-fit px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"
+            >
+              <Download className="w-3.5 h-3.5" />Download Calendar
+            </a>
+          )}
         </div>
         <button
           type="button"
@@ -166,7 +174,7 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
                   type="button"
                   onClick={handleRsvp}
                   disabled={saving}
-                  className="h-9 sm:self-end px-4 rounded-md bg-[#1e2b45] text-cream text-sm font-medium hover:bg-[#293a5b] disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="h-9 sm:self-end px-4 rounded-md border border-[#1e2b45]/20 bg-white text-[#1e2b45] text-sm font-medium hover:bg-[#1e2b45]/5 disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Save response
                 </button>
@@ -240,8 +248,10 @@ function ForumDetail({
         <div className="flex gap-2 flex-wrap min-w-0">
           {director && <Link href={`/directors/${director.id}`} className="h-8 px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"><UserRound className="w-3.5 h-3.5" />View profile</Link>}
           <a href={`mailto:${forum.logistics.contactEmail}`} className="h-8 px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"><Mail className="w-3.5 h-3.5" />Email</a>
-          <a href={getGoogleCalendarUrl(forum)} target="_blank" rel="noreferrer" className="h-8 px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"><CalendarPlus className="w-3.5 h-3.5" />Google</a>
-          <a href={getCalendarFileUrl(forum)} download={`${forum.title}-${forum.editionYear}.ics`} className="h-8 px-3 rounded-md bg-[#1e2b45] text-cream text-xs font-medium inline-flex items-center gap-1.5 hover:bg-[#293a5b]"><CalendarPlus className="w-3.5 h-3.5" />Outlook / Apple</a>
+          <a
+            href={`mailto:${forum.logistics.contactEmail}?subject=${encodeURIComponent(`Meeting request: ${forum.title}`)}&body=${encodeURIComponent(`Hello ${forum.logistics.contactName},\n\nI would like to arrange a meeting regarding ${forum.title}.\n\nThank you.`)}`}
+            className="h-8 px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"
+          ><CalendarPlus className="w-3.5 h-3.5" />Book a meeting</a>
         </div>
       </div>
       <div className="flex max-w-full border-b border-border px-4 sm:px-6 overflow-x-auto overscroll-x-contain">

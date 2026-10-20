@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [member, setMember] = useState<Member | null>(null);
   const [form, setForm] = useState({
+    contactEmail: "",
     title: "",
     organization: "",
     location: "",
@@ -45,6 +46,7 @@ export default function ProfilePage() {
       if (!resolvedMember) { router.replace("/"); return; }
       setMember(resolvedMember);
       setForm({
+        contactEmail: resolvedMember.contactEmail,
         title: resolvedMember.title,
         organization: resolvedMember.organization,
         location: resolvedMember.location,
@@ -64,6 +66,7 @@ export default function ProfilePage() {
     const revision = saveRevision.current;
     const timeout = setTimeout(async () => {
       const updates: Partial<Member> = {
+        contactEmail: form.contactEmail,
         title: form.title,
         organization: form.organization,
         location: form.location,
@@ -129,6 +132,10 @@ export default function ProfilePage() {
                 <p className="text-xs text-muted-foreground mt-0.5">Contact Cambridge to update your name or photo.</p>
               </div>
             </div>
+
+            <ProfileField id="profile-email" label="Email Address">
+              <Input id="profile-email" type="email" value={form.contactEmail} onChange={event => updateForm("contactEmail", event.target.value)} placeholder="e.g. name@yourfirm.com" />
+            </ProfileField>
 
             <ProfileField id="profile-title" label="Title">
               <Input id="profile-title" value={form.title} onChange={event => updateForm("title", event.target.value)} placeholder="e.g. Managing Partner" />
