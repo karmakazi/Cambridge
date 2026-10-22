@@ -32,6 +32,9 @@ export default function ProfilePage() {
     expertise: "",
     contactPreference: "email" as Member["contactPreference"],
     discoverable: true,
+    notifyQaNewPosts: true,
+    notifyQaReplies: true,
+    notifyQaMentions: true,
   });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const saveRevision = useRef(0);
@@ -56,6 +59,9 @@ export default function ProfilePage() {
         expertise: resolvedMember.expertise.join(", "),
         contactPreference: resolvedMember.contactPreference,
         discoverable: resolvedMember.discoverable,
+        notifyQaNewPosts: resolvedMember.notifyQaNewPosts ?? true,
+        notifyQaReplies: resolvedMember.notifyQaReplies ?? true,
+        notifyQaMentions: resolvedMember.notifyQaMentions ?? true,
       });
     });
     return () => { cancelled = true; };
@@ -76,6 +82,9 @@ export default function ProfilePage() {
         expertise: form.expertise.split(",").map(value => value.trim()).filter(Boolean),
         contactPreference: form.contactPreference,
         discoverable: form.discoverable,
+        notifyQaNewPosts: form.notifyQaNewPosts,
+        notifyQaReplies: form.notifyQaReplies,
+        notifyQaMentions: form.notifyQaMentions,
       };
 
       try {
@@ -213,6 +222,32 @@ export default function ProfilePage() {
                 <p className="text-xs text-muted-foreground">You will only appear to members in your forum network. You can change this at any time.</p>
               </div>
             )}
+          </div>
+
+          <div id="notifications" className="bg-white rounded-lg border border-border p-6 scroll-mt-6">
+            <h2 className="font-garamond text-base font-medium mb-1">Notification Settings</h2>
+            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">Member Q&amp;A notifications are on by default. Choose which activity you want to hear about.</p>
+            <div className="divide-y divide-border">
+              {([
+                { key: "notifyQaNewPosts", label: "New Q&A posts", desc: "New questions posted in sessions for your registered Forums." },
+                { key: "notifyQaReplies", label: "Replies to my posts", desc: "Responses to questions or replies you have contributed." },
+                { key: "notifyQaMentions", label: "Mentions", desc: "Messages in which another participant mentions you." },
+              ] as const).map(option => (
+                <label key={option.key} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0 cursor-pointer">
+                  <span>
+                    <span className="block text-sm font-medium">{option.label}</span>
+                    <span className="block text-xs text-muted-foreground mt-0.5">{option.desc}</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={form[option.key]}
+                    onChange={event => updateForm(option.key, event.target.checked)}
+                    className="accent-[#c8975e] w-4 h-4 mt-0.5 flex-shrink-0"
+                  />
+                </label>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-4">Prototype behaviour: preferences are saved in this browser. Production notifications can be delivered through the authenticated member service.</p>
           </div>
 
           <div className="bg-[#1e2b45]/[0.035] border border-[#1e2b45]/10 rounded-lg p-4">

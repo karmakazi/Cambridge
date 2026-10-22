@@ -87,7 +87,7 @@ export function getDirectoryMembers(
   scope: DirectoryScope,
   forumId = "",
 ): Member[] {
-  const allMembers = getAllResolvedMembers();
+  const allMembers = getAllResolvedMembers().filter(member => !member.isCambridgeStaff);
   const currentMember = allMembers.find(member => member.id === currentMemberId);
   const currentProgramIds = new Set(
     (currentMember?.forumsAttended ?? [])

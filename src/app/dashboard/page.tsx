@@ -225,6 +225,8 @@ function ForumDetail({
   onMaterialSeen: () => void;
 }) {
   const [tab, setTab] = useState<ForumTab>("agenda");
+  const agendaDates = Array.from(new Set(forum.agenda.map(item => item.date).filter((date): date is string => Boolean(date))));
+  const [agendaDate, setAgendaDate] = useState(agendaDates[0] ?? "");
   const director = getForumDirectorByEmail(forum.logistics.contactEmail);
   const tabs = [
     { id: "agenda" as const, label: "Agenda", show: forum.agenda.length > 0 },
@@ -280,30 +282,52 @@ function ForumDetail({
 
       <div className="px-4 sm:px-6 py-5 min-w-0">
         {tab === "agenda" && (
-          <div className="space-y-3">
-            {forum.agenda.map((item, index) => (
-              <div key={`${item.time}-${index}`} className="border-b border-border last:border-0 pb-3 last:pb-0">
-                <div className="hidden sm:flex gap-4">
-                  <span className="text-xs text-muted-foreground font-mono w-12 flex-shrink-0 pt-0.5">{item.time}</span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground">{item.title}</p>
-                    {item.description && <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>}
-                    <AgendaLinks item={item} />
-                  </div>
-                </div>
-                <details className="sm:hidden group">
-                  <summary className="list-none flex items-start gap-3 cursor-pointer">
-                    <span className="text-[11px] text-muted-foreground font-mono w-11 flex-shrink-0 pt-0.5">{item.time}</span>
-                    <span className="text-sm font-medium flex-1">{item.title}</span>
-                    <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-180" />
+          <div>
+            {agendaDates.length > 1 && (
+              <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted/70 p-1 mb-5" aria-label="Agenda days">
+                {agendaDates.map((date, index) => (
+                  <button
+                    type="button"
+                    key={date}
+                    onClick={() => setAgendaDate(date)}
+                    className={`rounded-md px-2 py-2 text-center transition-colors ${agendaDate === date ? "bg-white text-[#1e2b45] shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    <span className="block text-[10px] font-semibold uppercase tracking-[0.14em]">Day {index + 1}</span>
+                    <span className="block text-[11px] mt-0.5">{formatAgendaDay(date)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="space-y-0">
+              {forum.agenda.filter(item => !agendaDate || item.date === agendaDate).map((item, index) => (
+                <details key={`${item.date}-${item.time}-${index}`} className="group border-b border-border last:border-0">
+                  <summary className="list-none flex items-start gap-3 sm:gap-4 cursor-pointer py-3.5">
+                    <span className="text-[11px] text-muted-foreground font-mono w-16 sm:w-24 flex-shrink-0 pt-0.5">
+                      {item.time}{item.endTime ? `–${item.endTime}` : ""}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2 flex-wrap">
+                        {item.sessionNumber && <span className="label-caps text-[#9a6a33]">Session {item.sessionNumber}</span>}
+                        {item.optional && <Badge className="bg-[#c8975e]/12 text-[#9a6a33] border-0 text-[9px] h-4">Optional</Badge>}
+                        {item.kind === "social" && !item.optional && <Badge className="bg-[#1e2b45]/8 text-[#1e2b45] border-0 text-[9px] h-4">Social</Badge>}
+                      </span>
+                      <span className="block text-sm font-medium text-foreground mt-0.5">{item.title}</span>
+                      {item.venueName && <span className="block text-[11px] text-muted-foreground mt-0.5">{item.venueName}</span>}
+                    </span>
+                    <ChevronDown className="w-4 h-4 mt-0.5 text-muted-foreground transition-transform group-open:rotate-180 flex-shrink-0" />
                   </summary>
-                  <div className="pl-14 pr-5 pt-2">
-                    {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
-                    <AgendaLinks item={item} />
+                  <div className="pl-[5.5rem] sm:pl-28 pr-2 pb-4">
+                    {item.description && <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>}
+                    {item.topics?.length ? (
+                      <ul className="mt-3 space-y-1.5 text-xs text-muted-foreground list-disc pl-4">
+                        {item.topics.map(topic => <li key={topic}>{topic}</li>)}
+                      </ul>
+                    ) : null}
+                    <AgendaLinks item={item} forum={forum} />
                   </div>
                 </details>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
@@ -314,8 +338,7 @@ function ForumDetail({
                 <Download className="w-3.5 h-3.5" />Download all
               </a>
             </div>
-            <MaterialGroup title="Required pre-reading" description="Please review these items before the Forum." materials={forum.materials.filter(material => material.category === "required")} memberId={member.id} onMaterialSeen={onMaterialSeen} required />
-            <MaterialGroup title="Supplementary materials" description="Optional background and reference material." materials={forum.materials.filter(material => material.category === "supplementary")} memberId={member.id} onMaterialSeen={onMaterialSeen} />
+            <SessionMaterials forum={forum} memberId={member.id} onMaterialSeen={onMaterialSeen} />
           </div>
         )}
 
@@ -361,7 +384,7 @@ function ForumDetail({
   );
 }
 
-function AgendaLinks({ item }: { item: AgendaItem }) {
+function AgendaLinks({ item, forum }: { item: AgendaItem; forum: Forum }) {
   return (
     <>
       {item.speaker && (item.speakerMemberId ? (
@@ -380,7 +403,85 @@ function AgendaLinks({ item }: { item: AgendaItem }) {
           <span>{item.venueName} · {item.venueAddress}</span>
         </a>
       )}
+      {item.discussionLeaders?.length ? (
+        <div className="mt-4">
+          <p className="label-caps text-muted-foreground mb-2">Discussion leaders</p>
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {item.discussionLeaders.map(leader => (
+              <div key={`${leader.name}-${leader.organization}`} className="rounded-md border border-border bg-white px-3 py-2">
+                <p className="text-xs font-medium text-foreground">{leader.name}</p>
+                <p className="text-[11px] text-muted-foreground">{leader.organization}</p>
+                <p className="text-[11px] text-muted-foreground">{leader.location}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {item.sessionId && (
+        <div className="mt-2 pt-2 border-t border-border/70 flex items-center" aria-label={`${item.title} session sections`}>
+          <span className="h-8 px-3 rounded-l-md border border-[#1e2b45]/15 bg-[#1e2b45]/[0.07] text-[11px] font-medium text-[#1e2b45] inline-flex items-center">
+            Session details
+          </span>
+          <Link
+            href={`/forums/${forum.id}/sessions/${item.sessionId}/q-and-a`}
+            className="h-8 px-3 -ml-px rounded-r-md border border-[#1e2b45]/15 bg-white text-[11px] font-medium text-[#9a6a33] hover:bg-[#c8975e]/10 inline-flex items-center gap-1.5"
+          >
+            <MessageSquare className="w-3 h-3" />
+            Member Q&amp;A
+            {Boolean(item.qaNewCount) && (
+              <span className="rounded-full bg-[#a76d28] px-1.5 py-0.5 text-[9px] leading-none text-white">
+                {item.qaNewCount} new
+              </span>
+            )}
+          </Link>
+        </div>
+      )}
     </>
+  );
+}
+
+function formatAgendaDay(date: string): string {
+  return new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" })
+    .format(new Date(`${date}T12:00:00`));
+}
+
+function SessionMaterials({ forum, memberId, onMaterialSeen }: { forum: Forum; memberId: string; onMaterialSeen: () => void }) {
+  const sessions = forum.agenda.filter(item => item.sessionId && forum.materials.some(material => material.sessionId === item.sessionId));
+  const unassigned = forum.materials.filter(material => !material.sessionId);
+
+  return (
+    <div className="space-y-5">
+      {sessions.map(session => {
+        const materials = forum.materials.filter(material => material.sessionId === session.sessionId);
+        return (
+          <section key={session.sessionId} className="rounded-lg border border-border overflow-hidden">
+            <div className="bg-[#1e2b45]/[0.045] px-4 py-3 border-b border-border sm:flex sm:items-start sm:justify-between gap-5">
+              <div>
+                <p className="label-caps text-[#9a6a33]">Session {session.sessionNumber}</p>
+                <h3 className="font-garamond text-lg font-medium mt-0.5">{session.title}</h3>
+              </div>
+              {session.discussionLeaders?.length ? (
+                <div className="mt-2 sm:mt-0 sm:text-right flex-shrink-0">
+                  <p className="label-caps text-muted-foreground">Discussion leaders</p>
+                  {session.discussionLeaders.map(leader => (
+                    <p key={leader.name} className="text-[11px] text-muted-foreground">{leader.name} · {leader.organization}</p>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <div className="p-3 sm:p-4">
+              <MaterialGroup title="Required pre-reading" description="Please review these items before this session." materials={materials.filter(material => material.category === "required")} memberId={memberId} onMaterialSeen={onMaterialSeen} required />
+              <MaterialGroup title="Supplementary materials" description="Optional background and reference material." materials={materials.filter(material => material.category === "supplementary")} memberId={memberId} onMaterialSeen={onMaterialSeen} />
+            </div>
+          </section>
+        );
+      })}
+      {unassigned.length > 0 && (
+        <section>
+          <MaterialGroup title="General Forum materials" description="Documents that apply across the Forum programme." materials={unassigned} memberId={memberId} onMaterialSeen={onMaterialSeen} />
+        </section>
+      )}
+    </div>
   );
 }
 

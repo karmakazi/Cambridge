@@ -15,6 +15,10 @@ export type Member = {
   contactEmail: string;
   contactPreference: "email" | "request-intro" | "private";
   discoverable: boolean; // cross-forum discovery opt-in
+  notifyQaNewPosts?: boolean;
+  notifyQaReplies?: boolean;
+  notifyQaMentions?: boolean;
+  isCambridgeStaff?: boolean;
   avatar: string; // initials
   photo: string; // URL
 };
@@ -44,13 +48,29 @@ export type Forum = {
 };
 
 export type AgendaItem = {
+  sessionId?: string;
+  sessionNumber?: number;
+  qaNewCount?: number;
+  date?: string;
+  endTime?: string;
+  kind?: "session" | "meal" | "break" | "social" | "logistics";
+  optional?: boolean;
   time: string;
   title: string;
   description: string;
+  topics?: string[];
+  discussionLeaders?: DiscussionLeader[];
   speaker?: string;
   speakerMemberId?: string;
   venueName?: string;
   venueAddress?: string;
+};
+
+export type DiscussionLeader = {
+  name: string;
+  organization: string;
+  location: string;
+  memberId?: string;
 };
 
 export type Material = {
@@ -62,6 +82,7 @@ export type Material = {
   category: "required" | "supplementary";
   publishedAt: string;
   revision: number;
+  sessionId?: string;
 };
 
 export type ForumEditionSummary = {
@@ -394,6 +415,30 @@ export const MEMBERS: Member[] = [
     avatar: "RK",
     photo: "https://i.pravatar.cc/150?img=54",
   },
+  {
+    id: "staff-sarah-chen",
+    name: "Sarah Chen",
+    title: "Forum Director",
+    organization: "Cambridge Forums",
+    location: "Toronto, Canada",
+    address: "",
+    phone: "+1 416 703 1577 ext.305",
+    jurisdiction: "Cambridge Forums",
+    practiceArea: "Forum Direction",
+    expertise: ["Forum programming", "Participant experience", "Event logistics"],
+    bio: "Sarah is the Cambridge Forums contact for forum attendance, travel, logistics, and materials.",
+    forumsAttended: [],
+    steeringCommitteeForums: [],
+    contactEmail: "s.chen@cambridgeforums.com",
+    contactPreference: "email",
+    discoverable: false,
+    notifyQaNewPosts: true,
+    notifyQaReplies: true,
+    notifyQaMentions: true,
+    isCambridgeStaff: true,
+    avatar: "SC",
+    photo: "",
+  },
 ];
 
 // Cambridge staff are kept separate from forum participants so they can have
@@ -417,46 +462,124 @@ export const CURRENT_USER_ID = "m001";
 export const FORUMS: Forum[] = [
   {
     id: "f001",
-    programId: "competition-europe",
-    title: "Annual European Competition Forum",
-    area: "Antitrust",
+    programId: "international-wealth-disputes-2g",
+    title: "Cambridge Forum on International Wealth Disputes — 2nd Generation",
+    area: "International Wealth Disputes",
     editionYear: 2026,
-    startDate: "2026-11-14",
-    endDate: "2026-11-15",
-    startTime: "09:00",
-    endTime: "16:30",
-    timeZone: "Europe/Brussels",
-    location: "Brussels, Belgium",
-    venue: "Hotel Amigo",
+    startDate: "2026-10-14",
+    endDate: "2026-10-16",
+    startTime: "14:00",
+    endTime: "13:30",
+    timeZone: "Europe/Lisbon",
+    location: "Lisbon, Portugal",
+    venue: "Lapa Palace",
     status: "upcoming",
     participants: ["m001", "m004", "m009", "m015"],
-    websiteUrl: "https://www.cambridgeforums.com",
+    websiteUrl: "https://www.cambridgeforums.com/forums/fiwd2/",
     factSheetUrl: "/materials/prototype-fact-sheet.txt",
     materialsBundleUrl: "/materials/prototype-forum-pack.txt",
     memberFees: { m001: "$4,950 CAD", m004: "$4,950 CAD", m009: "$5,250 CAD", m015: "$4,750 CAD" },
     agenda: [
-      { time: "09:00", title: "Welcome & Introductions", description: "Chair's opening remarks and participant introductions.", speaker: "Elena Marchetti", speakerMemberId: "m001" },
-      { time: "09:30", title: "Digital Markets Act: 18 Months In", description: "A roundtable assessment of DMA enforcement and its practical impact on designated gatekeepers.", speaker: "Panel" },
-      { time: "11:00", title: "Break", description: "", },
-      { time: "11:15", title: "Merger Control in Volatile Markets", description: "Discussion of recent DG COMP decisional practice and shifting remedies policy.", speaker: "Panel" },
-      { time: "13:00", title: "Lunch", description: "Hosted lunch at the hotel. Informal networking." },
-      { time: "14:30", title: "State Aid in the Green Transition", description: "Examining how energy subsidies and ESG incentives interact with EU state aid rules.", speaker: "Panel" },
-      { time: "16:00", title: "Closing Discussion & Wrap-up", description: "Chair's summary and forward look.", speaker: "Elena Marchetti", speakerMemberId: "m001" },
-      { time: "19:30", title: "Dinner", description: "Private dinner at Brasserie La Maison du Cygne.", venueName: "La Maison du Cygne", venueAddress: "Grand Place 9, 1000 Brussels, Belgium" },
+      { date: "2026-10-14", time: "14:00", title: "Check-In", description: "Guest check-in opens at Lapa Palace.", kind: "logistics", venueName: "Lapa Palace" },
+      { date: "2026-10-14", time: "15:30", endTime: "18:30", title: "Optional Private Tour of Belém", description: "Meet in the hotel lobby for departure. Participation is optional.", kind: "social", optional: true, venueName: "Meet in hotel lobby" },
+      { date: "2026-10-14", time: "19:00", title: "Welcome Reception & Dinner", description: "Opening reception and dinner for participants and Cambridge representatives.", kind: "social", venueName: "Waterfall Terrace & Restaurant Lapa", venueAddress: "Lapa Palace, Lisbon, Portugal" },
+      { date: "2026-10-15", time: "07:30", title: "Breakfast", description: "Breakfast for Forum participants.", kind: "meal", venueName: "Monsanto" },
+      { date: "2026-10-15", time: "09:00", title: "Welcome Remarks & Introductions", description: "Opening remarks and participant introductions.", kind: "logistics", venueName: "Lapas Ballroom" },
+      {
+        date: "2026-10-15", sessionId: "psychology-hnw-family-disputes", sessionNumber: 1, qaNewCount: 3, time: "09:30", endTime: "10:40", kind: "session",
+        title: "The Psychology of HNW Family Disputes",
+        description: "Family wealth disputes are rarely driven by money alone. This session examines how financial security, identity, control, love, and perceived fairness shape conflict within HNW and UHNW families, and how advisers can recognize those dynamics early enough to improve the path to resolution.",
+        topics: ["When wealth becomes a measure of love, worth, or control", "Whether formal court processes can adequately address family dynamics", "How control, duress, and coercive relationships affect evidence and judicial decisions"],
+        discussionLeaders: [
+          { name: "Mark Lindley", organization: "Boodle Hatfield LLP", location: "London, United Kingdom" },
+          { name: "Lucy Stewart-Gould", organization: "Stewarts Law LLP", location: "London, United Kingdom" },
+        ],
+      },
+      { date: "2026-10-15", time: "10:40", title: "Refreshments", description: "Morning refreshments.", kind: "break" },
+      {
+        date: "2026-10-15", sessionId: "foundations-alternative-structures", sessionNumber: 2, time: "11:10", endTime: "12:20", kind: "session",
+        title: "Foundations and Other Alternative Structures: Panacea or plus ça change?",
+        description: "A comparative discussion of foundations, STAR and VISTA trusts, and other alternatives to traditional trust structures. Participants will consider whether these vehicles solve familiar governance and asset-protection problems or introduce new legal, tax, and administrative risks.",
+        topics: ["What alternative structures can offer that conventional trusts cannot", "Governance flexibility and protection from third-party claims", "Tax considerations and lessons each structure can borrow from the others"],
+        discussionLeaders: [
+          { name: "Andrea Dorjee-Good", organization: "Schellenberg Wittmer Ltd", location: "Zürich, Switzerland" },
+          { name: "Thomas Fletcher", organization: "Serle Court", location: "London, United Kingdom" },
+          { name: "Robert Lindley", organization: "Conyers Dill & Pearman", location: "Grand Cayman, Cayman Islands" },
+        ],
+      },
+      { date: "2026-10-15", time: "12:20", title: "Luncheon", description: "Hosted luncheon for Forum participants.", kind: "meal", venueName: "Monsanto" },
+      {
+        date: "2026-10-15", sessionId: "capacity-without-borders", sessionNumber: 3, time: "13:30", endTime: "15:00", kind: "session",
+        title: "Capacity Without Borders: Litigating Capacity Internationally",
+        description: "Cross-border capacity disputes can become contests over forum, evidence, personal protection, and control of assets. This practical session considers how capacity is assessed and litigated when individuals, families, advisers, and structures span several legal systems.",
+        topics: ["Which jurisdiction's capacity rules and evidentiary standards apply", "Parallel proceedings, inconsistent findings, and urgent protective measures", "Medical evidence, privilege, fiduciary conduct, and early settlement strategy"],
+        discussionLeaders: [
+          { name: "Jonathan Arr", organization: "Macfarlanes LLP", location: "London, United Kingdom" },
+          { name: "Gemma Willingham", organization: "Baker McKenzie LLP", location: "London, United Kingdom" },
+        ],
+      },
+      { date: "2026-10-15", time: "15:00", title: "Refreshments", description: "Afternoon refreshments.", kind: "break" },
+      {
+        date: "2026-10-15", sessionId: "ai-advocate-or-adversary", sessionNumber: 4, time: "15:30", endTime: "16:40", kind: "session",
+        title: "AI as Advocate or Adversary? Practical Risks, Opportunities, and the Road Ahead",
+        description: "A practical look at how AI is reshaping contentious trust and estate work. The discussion will balance opportunities in research, translation, evidence review, drafting, and trial preparation against confidentiality, supervision, reliability, and professional-responsibility risks.",
+        topics: ["How AI is already changing evidence, workflow, and client relationships", "Regulatory and ethical guardrails across jurisdictions", "Avoiding unreliable work while using AI to accelerate routine analysis"],
+        discussionLeaders: [
+          { name: "Bernadette Carey", organization: "Carey Olsen", location: "George Town, Cayman Islands" },
+          { name: "Mathew M. Wrenshall", organization: "RMO, LLP", location: "Pasadena, United States" },
+        ],
+      },
+      { date: "2026-10-15", time: "16:40", title: "End of Day 2", description: "Formal programme concludes for the day.", kind: "logistics" },
+      { date: "2026-10-15", time: "18:40", title: "Departure for Reception & Dinner", description: "Meet in the hotel lobby for group departure.", kind: "logistics", venueName: "Meet in hotel lobby" },
+      { date: "2026-10-15", time: "19:00", title: "Reception & Dinner", description: "Evening reception and dinner at Palácio Chiado.", kind: "social", venueName: "Palácio Chiado", venueAddress: "Palácio Chiado, Lisbon, Portugal" },
+      { date: "2026-10-16", time: "08:00", title: "Breakfast", description: "Breakfast for Forum participants.", kind: "meal", venueName: "Monsanto" },
+      {
+        date: "2026-10-16", sessionId: "love-war-litigation", sessionNumber: 5, time: "09:30", endTime: "10:40", kind: "session",
+        title: "All’s Fair in Love and War (and Litigation)",
+        description: "A candid examination of tactics used to escalate disputes or apply pressure, including challenges directed at opposing counsel, costs strategies, regulatory complaints, and conduct that risks crossing the line into abuse of process.",
+        topics: ["Appropriate pressure tactics versus litigation misconduct", "Claims or threats involving opposing counsel and legal fees", "How judges and professional regulators respond across jurisdictions"],
+        discussionLeaders: [
+          { name: "Ben Adamson", organization: "Conyers Dill & Pearman", location: "Hamilton, Bermuda" },
+          { name: "Andrew Mold, KC", organization: "Wilberforce Chambers", location: "London, United Kingdom" },
+        ],
+        venueName: "Lapas Ballroom",
+      },
+      { date: "2026-10-16", time: "10:40", title: "Refreshments & Check-Out", description: "Refreshments and hotel check-out period.", kind: "break" },
+      {
+        date: "2026-10-16", sessionId: "fiduciary-decisions", sessionNumber: 6, time: "11:10", endTime: "12:20", kind: "session",
+        title: "High Expectations, High Stakes: Dissecting Fiduciary Decisions",
+        description: "Fiduciaries must make defensible decisions while navigating beneficiary conflict, regulatory scrutiny, and differing legal traditions. This session explores how decisions are made, challenged, documented, and—when appropriate—supported by courts.",
+        topics: ["Decision-making amid conflict between beneficiaries", "Regulatory or criminal scrutiny and attacks by disgruntled beneficiaries", "The role and limits of court assistance across jurisdictions"],
+        discussionLeaders: [
+          { name: "Kelly Farragher", organization: "Fairway Group", location: "St Helier, Jersey, Channel Islands" },
+          { name: "Matthew Porpora", organization: "Sullivan & Cromwell LLP", location: "New York, United States" },
+          { name: "Nick Williams", organization: "Ogier", location: "St Helier, Jersey, Channel Islands" },
+        ],
+      },
+      { date: "2026-10-16", time: "12:20", title: "Closing Luncheon", description: "Closing luncheon for Forum participants.", kind: "meal", venueName: "Monsanto" },
+      { date: "2026-10-16", time: "13:30", title: "End of Forum & Departure", description: "Forum concludes.", kind: "logistics" },
     ],
     materials: [
-      { id: "mat001", title: "DMA Enforcement Summary — Oct 2026", type: "pdf", size: "1.2 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-12", revision: 1 },
-      { id: "mat002", title: "Merger Control Trends Q3 2026", type: "pdf", size: "890 KB", url: "/materials/prototype-resource.txt", category: "supplementary", publishedAt: "2026-10-08", revision: 2 },
-      { id: "mat003", title: "State Aid & Green Deal briefing", type: "reading", size: "340 KB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-15", revision: 1 },
+      { id: "mat001-iwd", sessionId: "psychology-hnw-family-disputes", title: "DSM Holdco v. Arthur T. Demoulas — Post-Trial Opinion", type: "pdf", size: "1.2 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-08", revision: 1 },
+      { id: "mat002-iwd", sessionId: "psychology-hnw-family-disputes", title: "LP v. MP", type: "pdf", size: "840 KB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-08", revision: 1 },
+      { id: "mat003-iwd", sessionId: "capacity-without-borders", title: "Capacity Without Borders — Case Study", type: "reading", size: "340 KB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-10", revision: 1 },
+      { id: "mat004-iwd", sessionId: "ai-advocate-or-adversary", title: "Ayinde v. London Borough of Haringey; Al Haroun v. Qatar National Bank", type: "pdf", size: "1.1 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-11", revision: 1 },
+      { id: "mat005-iwd", sessionId: "ai-advocate-or-adversary", title: "Bradley and another v. Frye-Chaikin", type: "pdf", size: "760 KB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-11", revision: 1 },
+      { id: "mat006-iwd", sessionId: "ai-advocate-or-adversary", title: "In re Domestic Partnership of Campos & Munoz", type: "pdf", size: "920 KB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-11", revision: 1 },
+      { id: "mat007-iwd", sessionId: "ai-advocate-or-adversary", title: "Sheerer v. Panas", type: "pdf", size: "680 KB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-11", revision: 1 },
+      { id: "mat008-iwd", sessionId: "ai-advocate-or-adversary", title: "United States v. Heppner", type: "pdf", size: "1.4 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-11", revision: 1 },
+      { id: "mat009-iwd", sessionId: "ai-advocate-or-adversary", title: "Warner v. Gilbarco, Inc.", type: "pdf", size: "870 KB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-11", revision: 1 },
+      { id: "mat010-iwd", sessionId: "ai-advocate-or-adversary", title: "Cambridge AI Forum Submission", type: "reading", size: "420 KB", url: "/materials/prototype-resource.txt", category: "supplementary", publishedAt: "2026-10-12", revision: 1 },
+      { id: "mat011-iwd", sessionId: "love-war-litigation", title: "Court of Appeal Decision in Salinas Pliego v. Astor Asset Management — 2026", type: "pdf", size: "1.6 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-12", revision: 1 },
     ],
     logistics: {
-      hotel: "Hotel Amigo",
-      hotelAddress: "Rue de l'Amigo 1-3, 1000 Brussels",
-      dressCode: "Business formal",
+      hotel: "Lapa Palace",
+      hotelAddress: "Rua do Pau de Bandeira 4, 1249-021 Lisbon, Portugal",
+      dressCode: "Business attire for Forum sessions; smart casual for evening events",
       contactName: "Sarah Chen",
       contactEmail: "s.chen@cambridgeforums.com",
       contactPhone: "+1 416 703 1577 ext.305",
-      notes: "A room block is held under 'Cambridge Forums' until 1 November. Check-in from 15:00.",
+      notes: "Check-in begins Wednesday afternoon. Group departures for optional and evening activities leave from the hotel lobby.",
     },
   },
   {
@@ -649,5 +772,6 @@ export function getForumById(id: string): Forum | undefined {
 }
 
 export function getForumsForMember(memberId: string): Forum[] {
+  if (getMemberById(memberId)?.isCambridgeStaff) return FORUMS;
   return FORUMS.filter((f) => f.participants.includes(memberId));
 }
