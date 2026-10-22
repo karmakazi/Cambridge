@@ -8,7 +8,7 @@ import { getResolvedMember } from "@/lib/store";
 import { submitProfileUpdate } from "@/lib/prototype-service";
 import type { Member } from "@/lib/data";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, Info, Loader2 } from "lucide-react";
+import { CheckCircle2, Clock3, Info, Loader2, Upload } from "lucide-react";
 
 const CONTACT_PREFS = [
   { value: "email", label: "Show email address", desc: "Your email and phone are visible to other logged-in members." },
@@ -22,6 +22,8 @@ export default function ProfilePage() {
   const router = useRouter();
   const [member, setMember] = useState<Member | null>(null);
   const [form, setForm] = useState({
+    publishedName: "",
+    preferredName: "",
     contactEmail: "",
     title: "",
     organization: "",
@@ -35,8 +37,11 @@ export default function ProfilePage() {
     notifyQaNewPosts: true,
     notifyQaReplies: true,
     notifyQaMentions: true,
+    photo: "",
+    photoReviewStatus: undefined as Member["photoReviewStatus"],
   });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [photoError, setPhotoError] = useState("");
   const saveRevision = useRef(0);
 
   useEffect(() => {
@@ -49,6 +54,8 @@ export default function ProfilePage() {
       if (!resolvedMember) { router.replace("/"); return; }
       setMember(resolvedMember);
       setForm({
+        publishedName: resolvedMember.publishedName ?? resolvedMember.name,
+        preferredName: resolvedMember.preferredName ?? resolvedMember.name.split(" ")[0],
         contactEmail: resolvedMember.contactEmail,
         title: resolvedMember.title,
         organization: resolvedMember.organization,
@@ -62,6 +69,8 @@ export default function ProfilePage() {
         notifyQaNewPosts: resolvedMember.notifyQaNewPosts ?? true,
         notifyQaReplies: resolvedMember.notifyQaReplies ?? true,
         notifyQaMentions: resolvedMember.notifyQaMentions ?? true,
+        photo: resolvedMember.photo,
+        photoReviewStatus: resolvedMember.photoReviewStatus,
       });
     });
     return () => { cancelled = true; };
@@ -72,6 +81,8 @@ export default function ProfilePage() {
     const revision = saveRevision.current;
     const timeout = setTimeout(async () => {
       const updates: Partial<Member> = {
+        publishedName: form.publishedName,
+        preferredName: form.preferredName,
         contactEmail: form.contactEmail,
         title: form.title,
         organization: form.organization,
@@ -85,6 +96,8 @@ export default function ProfilePage() {
         notifyQaNewPosts: form.notifyQaNewPosts,
         notifyQaReplies: form.notifyQaReplies,
         notifyQaMentions: form.notifyQaMentions,
+        photo: form.photo,
+        photoReviewStatus: form.photoReviewStatus,
       };
 
       try {
@@ -104,6 +117,29 @@ export default function ProfilePage() {
     saveRevision.current += 1;
     setForm(current => ({ ...current, [key]: value }));
     setSaveStatus("saving");
+  }
+
+  function handlePhoto(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setPhotoError("");
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("Choose a JPG, PNG, or other image file.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setPhotoError("Choose an image smaller than 2 MB for this prototype.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+      saveRevision.current += 1;
+      setForm(current => ({ ...current, photo: reader.result as string, photoReviewStatus: "pending" }));
+      setSaveStatus("saving");
+    };
+    reader.onerror = () => setPhotoError("That image could not be read. Please try another file.");
+    reader.readAsDataURL(file);
   }
 
   if (!member) return null;
@@ -130,16 +166,39 @@ export default function ProfilePage() {
 
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
-                {member.photo ? (
-                  <img src={member.photo} alt="" className="w-full h-full object-cover" />
+                {form.photo ? (
+                  <img src={form.photo} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center"><span className="text-lg font-semibold text-[#1e2b45]">{member.avatar}</span></div>
                 )}
               </div>
               <div className="flex-1">
                 <p className="font-medium text-foreground">{member.name}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Contact Cambridge to update your name or photo.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Your account name remains managed by Cambridge.</p>
+                <label className="mt-2 h-8 w-fit px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5 cursor-pointer">
+                  <Upload className="w-3.5 h-3.5" />Update photo
+                  <input type="file" accept="image/*" onChange={handlePhoto} className="sr-only" />
+                </label>
               </div>
+            </div>
+
+            {form.photoReviewStatus === "pending" && (
+              <div className="rounded-md border border-[#c8975e]/30 bg-[#c8975e]/[0.06] px-3 py-2 flex items-start gap-2">
+                <Clock3 className="w-3.5 h-3.5 text-[#9a6a33] mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-muted-foreground"><span className="font-medium text-foreground">Photo submitted for review.</span> Cambridge will approve it before it appears to other members.</p>
+              </div>
+            )}
+            {photoError && <p className="text-xs text-red-700">{photoError}</p>}
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ProfileField id="profile-published-name" label="Published name">
+                <Input id="profile-published-name" value={form.publishedName} onChange={event => updateForm("publishedName", event.target.value)} placeholder="Name shown in the roster" />
+                <p className="text-xs text-muted-foreground mt-1">How your name should appear in participant lists and materials.</p>
+              </ProfileField>
+              <ProfileField id="profile-preferred-name" label="Preferred / badge name">
+                <Input id="profile-preferred-name" value={form.preferredName} onChange={event => updateForm("preferredName", event.target.value)} placeholder="Name used in person" />
+                <p className="text-xs text-muted-foreground mt-1">How you would like Cambridge and other participants to address you.</p>
+              </ProfileField>
             </div>
 
             <ProfileField id="profile-email" label="Email Address">

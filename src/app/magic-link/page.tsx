@@ -2,19 +2,17 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { loginWithMagicLink } from "@/lib/auth";
 
 function MagicLinkHandler() {
   const router = useRouter();
   const params = useSearchParams();
-  const [status, setStatus] = useState<"verifying" | "success" | "error">("verifying");
+  const email = params.get("email") ?? "";
+  const [status, setStatus] = useState<"verifying" | "success" | "error">(email ? "verifying" : "error");
 
   useEffect(() => {
-    const email = params.get("email") ?? "";
-    if (!email) {
-      setStatus("error");
-      return;
-    }
+    if (!email) return;
     // Simulate token verification delay
     const t = setTimeout(() => {
       loginWithMagicLink(email);
@@ -22,7 +20,7 @@ function MagicLinkHandler() {
       setTimeout(() => router.push("/dashboard"), 800);
     }, 1200);
     return () => clearTimeout(t);
-  }, [params, router]);
+  }, [email, router]);
 
   return (
     <div className="min-h-screen bg-navy flex flex-col items-center justify-center gap-4">
@@ -48,7 +46,8 @@ function MagicLinkHandler() {
         {status === "error" && (
           <>
             <p className="text-red-400 text-sm">This link is invalid or has expired.</p>
-            <a href="/" className="text-gold text-sm underline">Return to sign in</a>
+            <Link href="/account-help" className="text-gold text-sm underline">Request a new sign-in link</Link>
+            <Link href="/" className="text-white/40 text-xs hover:text-cream">Return to sign in</Link>
           </>
         )}
       </div>

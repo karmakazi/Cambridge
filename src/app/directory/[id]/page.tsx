@@ -50,6 +50,7 @@ export default function MemberProfilePage() {
   const isOwnProfile = currentUserId === member.id;
   const tenure = getMemberTenure(member);
   const forumHistory = getForumHistory(member);
+  const displayName = member.publishedName || member.name;
 
   return (
     <AppShell>
@@ -65,7 +66,7 @@ export default function MemberProfilePage() {
           <div className="flex items-start gap-3 sm:gap-5">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
               {member.photo ? (
-                <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
+                <img src={member.photo} alt={displayName} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <span className="text-xl font-semibold text-[#1e2b45]">{member.avatar}</span>
@@ -75,7 +76,8 @@ export default function MemberProfilePage() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                 <div className="min-w-0">
-                  <h1 className="font-garamond text-2xl font-medium text-foreground leading-tight">{member.name}</h1>
+                  <h1 className="font-garamond text-2xl font-medium text-foreground leading-tight">{displayName}</h1>
+                  {member.preferredName && member.preferredName !== displayName && <p className="text-xs text-muted-foreground mt-0.5">Preferred name: {member.preferredName}</p>}
                   <p className="text-muted-foreground text-sm mt-0.5">{member.title}</p>
                   <p className="text-sm font-medium text-foreground mt-0.5">{member.organization}</p>
                 </div>
@@ -137,6 +139,11 @@ export default function MemberProfilePage() {
                         Steering Committee
                       </Badge>
                     )}
+                    {member.coChairForums?.includes(edition.id) && (
+                      <Badge className="bg-[#1e2b45] text-cream border-0 text-[9px] font-medium">
+                        Committee Co-Chair
+                      </Badge>
+                    )}
                   </div>
                 </div>
               );
@@ -196,7 +203,7 @@ export default function MemberProfilePage() {
               </p>
               {!isOwnProfile && (
                 <a
-                  href={`mailto:webhelp@cambridgeforums.com?subject=Introduction request: ${member.name}`}
+                  href={`mailto:webhelp@cambridgeforums.com?subject=Introduction request: ${displayName}`}
                   className="inline-flex items-center gap-2 text-sm text-[#1e2b45] font-medium border border-[#1e2b45]/20 px-4 py-2 rounded-md hover:bg-[#1e2b45]/5 transition-colors"
                 >
                   <Mail className="w-4 h-4" />

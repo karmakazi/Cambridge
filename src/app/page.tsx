@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getAuth, setPendingEmail, loginWithPassword } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,7 +122,7 @@ export default function LoginPage() {
                       <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                     <p className="text-white/30 text-xs text-center leading-relaxed">
-                      We'll email you a secure, one-time link. No password needed.
+                      We&apos;ll email you a secure, one-time link. No password needed.
                     </p>
                   </form>
                 ) : (
@@ -168,6 +169,9 @@ export default function LoginPage() {
                     </p>
                   </form>
                 )}
+                <div className="border-t border-white/10 mt-6 pt-5 text-center">
+                  <Link href="/account-help" className="text-white/40 text-xs hover:text-gold transition-colors">Trouble signing in?</Link>
+                </div>
               </>
             ) : (
               /* Sent state */
@@ -178,7 +182,7 @@ export default function LoginPage() {
                 <div>
                   <h2 className="font-garamond text-cream text-2xl font-medium mb-2">Check your inbox</h2>
                   <p className="text-white/50 text-sm leading-relaxed">
-                    We've sent a secure sign-in link to <span className="text-cream">{email}</span>.
+                    We&apos;ve sent a secure sign-in link to <span className="text-cream">{email}</span>.
                     The link expires in 15 minutes.
                   </p>
                 </div>
@@ -202,6 +206,7 @@ export default function LoginPage() {
                 >
                   Use a different email
                 </button>
+                <Link href="/account-help" className="block text-gold/80 text-xs hover:text-gold hover:underline">Link expired or didn&apos;t arrive?</Link>
               </div>
             )}
           </div>

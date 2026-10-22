@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
@@ -12,20 +12,23 @@ import {
   formatForumDateRange,
   getCalendarFileUrl,
   getForumParticipation,
+  getMemberTenure,
   getSteeringCommitteeNotes,
+  getTravelDetails,
   getUnseenMaterialCount,
   isMaterialUnseen,
   markMaterialSeen,
   submitRsvp,
+  submitTravelDetails,
   type ForumParticipation,
   type RsvpStatus,
   type SteeringCommitteeNote,
+  type TravelDetails,
 } from "@/lib/prototype-service";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
-  Calendar, CalendarPlus, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Download,
-  ExternalLink, Eye, FileText, Loader2, Mail, MapPin, MessageSquare, Send, UserRound, Users, XCircle,
+  Award, BedDouble, Calendar, CalendarPlus, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Download,
+  ExternalLink, Eye, FileText, Globe, Loader2, Mail, MapPin, MessageSquare, Phone, Plane, Send, ShieldCheck, UserRound, Users, XCircle,
 } from "lucide-react";
 
 const RSVP_OPTIONS: Array<{ value: RsvpStatus; label: string }> = [
@@ -211,7 +214,7 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
   );
 }
 
-type ForumTab = "agenda" | "materials" | "participants" | "logistics" | "steering";
+type ForumTab = "overview" | "agenda" | "materials" | "participants" | "logistics" | "steering";
 
 function ForumDetail({
   forum,
@@ -224,11 +227,12 @@ function ForumDetail({
   unseenCount: number;
   onMaterialSeen: () => void;
 }) {
-  const [tab, setTab] = useState<ForumTab>("agenda");
+  const [tab, setTab] = useState<ForumTab>(forum.overview ? "overview" : "agenda");
   const agendaDates = Array.from(new Set(forum.agenda.map(item => item.date).filter((date): date is string => Boolean(date))));
   const [agendaDate, setAgendaDate] = useState(agendaDates[0] ?? "");
   const director = getForumDirectorByEmail(forum.logistics.contactEmail);
   const tabs = [
+    { id: "overview" as const, label: "Forum overview", show: Boolean(forum.overview) },
     { id: "agenda" as const, label: "Agenda", show: forum.agenda.length > 0 },
     { id: "materials" as const, label: unseenCount ? `Materials (${unseenCount})` : "Materials", show: forum.materials.length > 0 },
     { id: "participants" as const, label: "Participants", show: true },
@@ -281,6 +285,27 @@ function ForumDetail({
       </div>
 
       <div className="px-4 sm:px-6 py-5 min-w-0">
+        {tab === "overview" && forum.overview && (
+          <div className="space-y-5">
+            <section className="rounded-lg border border-[#c8975e]/30 bg-[#c8975e]/[0.06] p-4 sm:p-5">
+              <p className="label-caps text-[#9a6a33] mb-2">About this Forum</p>
+              <h3 className="font-garamond text-xl font-medium text-foreground">Built around participation, not presentations.</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-2 max-w-3xl">{forum.overview.summary}</p>
+              <div className="flex flex-wrap gap-2 mt-4">
+                {forum.overview.principles.map(principle => <Badge key={principle} className="bg-white text-[#1e2b45] border border-[#1e2b45]/10 text-[10px] font-medium">{principle}</Badge>)}
+              </div>
+            </section>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <OverviewCard icon={<Users className="w-4 h-4" />} label="Who participates" text={forum.overview.participantProfile} />
+              <OverviewCard icon={<MessageSquare className="w-4 h-4" />} label="How it works" text={forum.overview.format} />
+              <OverviewCard icon={<ShieldCheck className="w-4 h-4" />} label="The atmosphere" text={forum.overview.atmosphere} />
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">First time attending? Your Forum Director can answer questions about the format, preparation, or what to expect.</p>
+          </div>
+        )}
+
         {tab === "agenda" && (
           <div>
             {agendaDates.length > 1 && (
@@ -342,45 +367,182 @@ function ForumDetail({
           </div>
         )}
 
-        {tab === "participants" && <ParticipantList participantIds={forum.participants} />}
+        {tab === "participants" && <ParticipantList forum={forum} />}
 
         {tab === "steering" && <SteeringCommitteeWorkspace forum={forum} member={member} />}
 
-        {tab === "logistics" && (
-          <div className="space-y-3 text-sm">
-            <div>
-              <p className="label-caps text-muted-foreground mb-1">Venue</p>
-              <p className="font-medium">{forum.logistics.hotel}</p>
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(forum.logistics.hotelAddress)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="block text-xs text-muted-foreground hover:text-foreground"
-              >{forum.logistics.hotelAddress}</a>
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(forum.logistics.hotelAddress)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-[#9a6a33] hover:underline"
-              >Open in Google Maps<ExternalLink className="w-3 h-3" /></a>
-            </div>
-            <Separator />
-            <div><p className="label-caps text-muted-foreground mb-1">Dress Code</p><p>{forum.logistics.dressCode}</p></div>
-            <Separator />
-            <div>
-              <p className="label-caps text-muted-foreground mb-1">Your Cambridge Contact</p>
-              <p className="font-medium">{forum.logistics.contactName}</p>
-              <a href={`mailto:${forum.logistics.contactEmail}`} className="block text-xs text-[#9a6a33] hover:underline">{forum.logistics.contactEmail}</a>
-              <a href={`tel:${forum.logistics.contactPhone}`} className="text-xs text-muted-foreground hover:text-foreground">{forum.logistics.contactPhone}</a>
-            </div>
-            {forum.logistics.notes && (<><Separator /><div><p className="label-caps text-muted-foreground mb-1">Notes</p><p className="text-muted-foreground text-xs leading-relaxed">{forum.logistics.notes}</p></div></>)}
-            <a href={forum.websiteUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-[#9a6a33] hover:underline">
-              Visit forum website<ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
-        )}
+        {tab === "logistics" && <LogisticsPanel forum={forum} memberId={member.id} />}
       </div>
     </div>
+  );
+}
+
+function OverviewCard({ icon, label, text }: { icon: ReactNode; label: string; text: string }) {
+  return (
+    <section className="rounded-lg border border-border bg-white p-4">
+      <div className="w-8 h-8 rounded-full bg-[#1e2b45]/8 text-[#1e2b45] flex items-center justify-center mb-3">{icon}</div>
+      <p className="label-caps text-[#9a6a33] mb-1.5">{label}</p>
+      <p className="text-xs text-muted-foreground leading-relaxed">{text}</p>
+    </section>
+  );
+}
+
+function LogisticsPanel({ forum, memberId }: { forum: Forum; memberId: string }) {
+  const [travel, setTravel] = useState<TravelDetails>(() => getTravelDetails(forum.id, memberId));
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const logistics = forum.logistics;
+
+  function updateTravel(field: keyof TravelDetails, value: string) {
+    setTravel(current => ({ ...current, [field]: value }));
+    setSaved(false);
+  }
+
+  async function saveTravel() {
+    setSaving(true);
+    await submitTravelDetails(forum.id, memberId, travel);
+    setSaving(false);
+    setSaved(true);
+  }
+
+  return (
+    <div className="space-y-5 text-sm">
+      <div className="grid gap-3 md:grid-cols-2">
+        <section className="rounded-lg border border-border bg-white p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-[#1e2b45]/8 text-[#1e2b45] flex items-center justify-center flex-shrink-0"><BedDouble className="w-4 h-4" /></div>
+            <div className="min-w-0">
+              <p className="label-caps text-[#9a6a33] mb-1">Hotel &amp; accommodation</p>
+              <p className="font-medium">{logistics.hotel}</p>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(logistics.hotelAddress)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-muted-foreground hover:text-[#9a6a33] hover:underline"
+              >{logistics.hotelAddress}</a>
+              {logistics.accommodation && <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{logistics.accommodation}</p>}
+              {(logistics.hotelCheckIn || logistics.hotelCheckOut) && (
+                <dl className="mt-3 grid grid-cols-[5rem_1fr] gap-x-3 gap-y-1 text-xs">
+                  {logistics.hotelCheckIn && <><dt className="text-muted-foreground">Check-in</dt><dd>{logistics.hotelCheckIn}</dd></>}
+                  {logistics.hotelCheckOut && <><dt className="text-muted-foreground">Check-out</dt><dd>{logistics.hotelCheckOut}</dd></>}
+                </dl>
+              )}
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(logistics.hotelAddress)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-[#9a6a33] hover:underline"
+              >Open in Google Maps<ExternalLink className="w-3 h-3" /></a>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-border bg-white p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-[#1e2b45]/8 text-[#1e2b45] flex items-center justify-center flex-shrink-0"><Plane className="w-4 h-4" /></div>
+            <div>
+              <p className="label-caps text-[#9a6a33] mb-1">Airport &amp; arrival</p>
+              {logistics.airportName ? (
+                <>
+                  <p className="font-medium">{logistics.airportName}{logistics.airportCode ? ` (${logistics.airportCode})` : ""}</p>
+                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{logistics.airportTransfer}</p>
+                </>
+              ) : <p className="text-xs text-muted-foreground">Contact your Forum Director for recommended travel arrangements.</p>}
+              <p className="text-xs text-muted-foreground mt-3 leading-relaxed">{logistics.notes}</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {logistics.inclusions?.length ? (
+        <section className="rounded-lg border border-[#c8975e]/30 bg-[#c8975e]/[0.06] p-4">
+          <p className="label-caps text-[#9a6a33] mb-2">What your Forum fee includes</p>
+          <ul className="grid gap-2 sm:grid-cols-2 text-xs text-foreground">
+            {logistics.inclusions.map(item => <li key={item} className="flex items-start gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#9a6a33] flex-shrink-0 mt-0.5" />{item}</li>)}
+          </ul>
+        </section>
+      ) : null}
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <section className="rounded-lg border border-border bg-white p-4">
+          <div className="flex items-start gap-3">
+            <Award className="w-4 h-4 text-[#9a6a33] flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="label-caps text-[#9a6a33] mb-1">CLE/CPD information</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{logistics.cleCpd ?? "Contact Cambridge for accreditation information for your jurisdiction."}</p>
+            </div>
+          </div>
+        </section>
+        <section className="rounded-lg border border-border bg-white p-4">
+          <p className="label-caps text-[#9a6a33] mb-1">Dress code</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">{logistics.dressCode}</p>
+        </section>
+      </div>
+
+      {logistics.cancellationPolicy?.length ? (
+        <details className="group rounded-lg border border-border bg-white">
+          <summary className="list-none cursor-pointer px-4 py-3 flex items-center justify-between gap-3">
+            <div><p className="label-caps text-[#9a6a33]">Cancellation policy</p><p className="text-xs text-muted-foreground mt-1">Registration is non-transferable. View refund and credit deadlines.</p></div>
+            <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="border-t border-border px-4 py-3 space-y-3">
+            {logistics.cancellationPolicy.map(item => (
+              <div key={item.deadline} className="grid gap-1 sm:grid-cols-[12rem_1fr] text-xs">
+                <p className="font-medium">{item.deadline}</p>
+                <p className="text-muted-foreground">{item.outcome}</p>
+              </div>
+            ))}
+          </div>
+        </details>
+      ) : null}
+
+      {forum.status === "upcoming" && (
+        <section className="rounded-lg border border-border bg-white p-4">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <p className="label-caps text-[#9a6a33] mb-1">Your travel plans</p>
+              <h4 className="font-medium">Share your arrival and departure details</h4>
+              <p className="text-xs text-muted-foreground mt-1">This helps Cambridge coordinate your hotel stay and on-site arrival. Prototype entries are saved only in this browser.</p>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TravelField label="Arrival details" hint="Flight or train number">
+              <input value={travel.arrivalDetails} onChange={event => updateTravel("arrivalDetails", event.target.value)} placeholder="e.g. AC 810" className="w-full h-9 rounded-md border border-input bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+            </TravelField>
+            <TravelField label="Arrival date and time">
+              <input type="datetime-local" value={travel.arrivalDateTime} onChange={event => updateTravel("arrivalDateTime", event.target.value)} className="w-full h-9 rounded-md border border-input bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+            </TravelField>
+            <TravelField label="Departure details" hint="Flight or train number">
+              <input value={travel.departureDetails} onChange={event => updateTravel("departureDetails", event.target.value)} placeholder="e.g. AC 811" className="w-full h-9 rounded-md border border-input bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+            </TravelField>
+            <TravelField label="Departure date and time">
+              <input type="datetime-local" value={travel.departureDateTime} onChange={event => updateTravel("departureDateTime", event.target.value)} className="w-full h-9 rounded-md border border-input bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+            </TravelField>
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <button type="button" onClick={saveTravel} disabled={saving} className="h-9 px-4 rounded-md border border-[#1e2b45]/20 bg-white text-[#1e2b45] text-sm font-medium hover:bg-[#1e2b45]/5 disabled:opacity-60 inline-flex items-center gap-2">
+              {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Save travel details
+            </button>
+            {saved && <span className="text-xs text-green-700 inline-flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Saved</span>}
+          </div>
+        </section>
+      )}
+
+      <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs">
+        <a href={`mailto:${logistics.contactEmail}`} className="text-[#9a6a33] hover:underline">Questions? Email {logistics.contactName}</a>
+        <a href={forum.websiteUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#9a6a33] hover:underline">Visit forum website<ExternalLink className="w-3 h-3" /></a>
+      </div>
+    </div>
+  );
+}
+
+function TravelField({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+  return (
+    <label className="block">
+      <span className="block text-xs font-medium mb-1">{label}</span>
+      {children}
+      {hint && <span className="block text-[11px] text-muted-foreground mt-1">{hint}</span>}
+    </label>
   );
 }
 
@@ -581,21 +743,89 @@ function SteeringCommitteeWorkspace({ forum, member }: { forum: Forum; member: M
   );
 }
 
-function ParticipantList({ participantIds }: { participantIds: string[] }) {
-  const participants = participantIds.map(id => getResolvedMember(id)).filter(Boolean) as Member[];
+function ParticipantList({ forum }: { forum: Forum }) {
+  const participants = forum.participants.map(id => getResolvedMember(id)).filter(Boolean) as Member[];
   return (
-    <div className="space-y-2">
-      {participants.map(participant => (
-        <Link key={participant.id} href={`/directory/${participant.id}`} className="flex items-center gap-3 py-2 hover:bg-muted/40 rounded px-2 -mx-2 transition-colors group">
-          <div className="w-7 h-7 rounded-full bg-[#1e2b45]/10 flex items-center justify-center flex-shrink-0">
-            <span className="text-[10px] font-semibold text-[#1e2b45]">{participant.avatar}</span>
+    <div>
+      <div className="mb-4">
+        <h3 className="font-garamond text-lg font-medium">Forum participants</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">Select a participant to view their full directory profile and contact preferences.</p>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {participants.map(participant => {
+          const tenure = getMemberTenure(participant);
+          const isCoChair = participant.coChairForums?.includes(forum.id);
+          const isSteeringCommittee = participant.steeringCommitteeForums.includes(forum.id);
+          const displayName = participant.publishedName || participant.name;
+          return (
+            <article key={participant.id} className="rounded-lg border border-border bg-white p-4 hover:border-[#c8975e]/50 transition-colors">
+              <div className="flex items-start gap-3">
+                <Link href={`/directory/${participant.id}`} aria-label={`View ${displayName}'s profile`} className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
+                  {participant.photo ? (
+                    <img src={participant.photo} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="w-full h-full flex items-center justify-center text-xs font-semibold text-[#1e2b45]">{participant.avatar}</span>
+                  )}
+                </Link>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <Link href={`/directory/${participant.id}`} className="text-sm font-medium hover:text-[#9a6a33] hover:underline">{displayName}</Link>
+                    <div className="flex flex-wrap justify-end gap-1">
+                      {isCoChair && <Badge className="bg-[#1e2b45] text-cream border-0 text-[9px] h-4">Committee Co-Chair</Badge>}
+                      {isSteeringCommittee && <Badge className="bg-[#c8975e]/12 text-[#9a6a33] border-0 text-[9px] h-4">Steering Committee</Badge>}
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{participant.title}</p>
+                  <p className="text-xs font-medium mt-0.5">{participant.organization}</p>
+                  <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1"><Globe className="w-3 h-3" />{participant.location}</p>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <p className="text-[11px] text-muted-foreground">
+                  {tenure.count} Forum {tenure.count === 1 ? "edition" : "editions"}{tenure.firstYear ? ` · first attended ${tenure.firstYear}` : ""}
+                </p>
+                <div className="flex items-center gap-3">
+                  {participant.contactPreference === "email" && participant.contactEmail && (
+                    <a href={`mailto:${participant.contactEmail}`} className="text-[11px] text-[#9a6a33] hover:underline inline-flex items-center gap-1"><Mail className="w-3 h-3" />Email</a>
+                  )}
+                  {participant.contactPreference === "email" && participant.phone && (
+                    <a href={`tel:${participant.phone}`} className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Phone className="w-3 h-3" />Phone</a>
+                  )}
+                  <Link href={`/directory/${participant.id}`} className="text-[11px] font-medium text-[#1e2b45] hover:underline">View profile</Link>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {forum.representatives?.length ? (
+        <section className="mt-7 pt-6 border-t border-border">
+          <div className="mb-4">
+            <p className="label-caps text-[#9a6a33]">Cambridge Forums</p>
+            <h3 className="font-garamond text-lg font-medium mt-0.5">Cambridge representatives</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Your on-site contacts for programme, attendance, and event support.</p>
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground group-hover:text-[#9a6a33] transition-colors">{participant.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{participant.title} · {participant.organization}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {forum.representatives.map(representative => (
+              <article key={representative.id} className="rounded-lg border border-[#c8975e]/30 bg-[#c8975e]/[0.045] p-4 flex items-start gap-3">
+                <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45] text-cream flex items-center justify-center">
+                  {representative.photo ? <img src={representative.photo} alt="" className="w-full h-full object-cover" /> : <span className="text-xs font-semibold">{representative.avatar}</span>}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{representative.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{representative.title}</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">{representative.location}</p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                    <a href={`mailto:${representative.contactEmail}`} className="text-[11px] text-[#9a6a33] hover:underline inline-flex items-center gap-1"><Mail className="w-3 h-3" />Email</a>
+                    <a href={`tel:${representative.contactPhone}`} className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Phone className="w-3 h-3" />{representative.contactPhone}</a>
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
-        </Link>
-      ))}
+        </section>
+      ) : null}
     </div>
   );
 }

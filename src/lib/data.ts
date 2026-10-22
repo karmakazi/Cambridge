@@ -1,6 +1,8 @@
 export type Member = {
   id: string;
   name: string;
+  publishedName?: string;
+  preferredName?: string;
   title: string;
   organization: string;
   location: string;
@@ -12,6 +14,7 @@ export type Member = {
   bio: string;
   forumsAttended: string[];
   steeringCommitteeForums: string[]; // forum edition IDs where this member served on the SC
+  coChairForums?: string[]; // forum edition IDs where this member served as Committee Co-Chair
   contactEmail: string;
   contactPreference: "email" | "request-intro" | "private";
   discoverable: boolean; // cross-forum discovery opt-in
@@ -21,6 +24,7 @@ export type Member = {
   isCambridgeStaff?: boolean;
   avatar: string; // initials
   photo: string; // URL
+  photoReviewStatus?: "pending" | "approved";
 };
 
 export type Forum = {
@@ -45,6 +49,16 @@ export type Forum = {
   agenda: AgendaItem[];
   materials: Material[];
   logistics: Logistics;
+  representatives?: ForumRepresentative[];
+  overview?: ForumOverview;
+};
+
+export type ForumOverview = {
+  summary: string;
+  participantProfile: string;
+  format: string;
+  atmosphere: string;
+  principles: string[];
 };
 
 export type AgendaItem = {
@@ -101,6 +115,18 @@ export type Logistics = {
   contactEmail: string;
   contactPhone: string;
   notes: string;
+  airportName?: string;
+  airportCode?: string;
+  airportTransfer?: string;
+  hotelCheckIn?: string;
+  hotelCheckOut?: string;
+  accommodation?: string;
+  inclusions?: string[];
+  cleCpd?: string;
+  cancellationPolicy?: Array<{
+    deadline: string;
+    outcome: string;
+  }>;
 };
 
 export type ForumDirector = {
@@ -112,6 +138,18 @@ export type ForumDirector = {
   contactEmail: string;
   contactPhone: string;
   avatar: string;
+};
+
+export type ForumRepresentative = {
+  id: string;
+  name: string;
+  title: string;
+  organization: string;
+  location: string;
+  contactEmail: string;
+  contactPhone: string;
+  avatar: string;
+  photo?: string;
 };
 
 export const MEMBERS: Member[] = [
@@ -128,7 +166,8 @@ export const MEMBERS: Member[] = [
     expertise: ["Competition Law", "Merger Control", "State Aid", "Digital Markets"],
     bio: "Elena leads one of Italy's foremost competition practices, advising multinationals on EU merger filings and cartel investigations. Former legal advisor to the European Commission.",
     forumsAttended: ["f001", "f004", "f007"],
-    steeringCommitteeForums: ["f001", "f004"],
+    steeringCommitteeForums: ["f004"],
+    coChairForums: ["f001"],
     contactEmail: "e.marchetti@marchetti-silveira.com",
     contactPreference: "email",
     discoverable: true,
@@ -408,7 +447,7 @@ export const MEMBERS: Member[] = [
     expertise: ["CEE Competition Law", "Bid Rigging", "Dawn Raids", "Leniency Applications"],
     bio: "Robert is the pre-eminent competition lawyer in Central Europe, acting for Fortune 500 companies in Polish and European competition investigations and merger control proceedings.",
     forumsAttended: ["f001", "f004"],
-    steeringCommitteeForums: [],
+    steeringCommitteeForums: ["f001"],
     contactEmail: "r.kowalski@kowalskiwisnewski.pl",
     contactPreference: "email",
     discoverable: true,
@@ -445,6 +484,16 @@ export const MEMBERS: Member[] = [
 // useful profiles without appearing to have member attendance history.
 export const FORUM_DIRECTORS: ForumDirector[] = [
   {
+    id: "shona-fox",
+    name: "Shóna Fox",
+    title: "Forum Director, Financial Regulation, Enforcement & Transactions",
+    organization: "Cambridge Forums Inc.",
+    bio: "Shóna directs Cambridge Forums programmes in financial regulation, enforcement, and transactions and supports participants throughout the Forum experience.",
+    contactEmail: "sfox@cambridgeforums.com",
+    contactPhone: "+1 647 673 5281",
+    avatar: "SF",
+  },
+  {
     id: "sarah-chen",
     name: "Sarah Chen",
     title: "Forum Director",
@@ -479,6 +528,13 @@ export const FORUMS: Forum[] = [
     factSheetUrl: "/materials/prototype-fact-sheet.txt",
     materialsBundleUrl: "/materials/prototype-forum-pack.txt",
     memberFees: { m001: "$4,950 CAD", m004: "$4,950 CAD", m009: "$5,250 CAD", m015: "$4,750 CAD" },
+    overview: {
+      summary: "An invitation-only gathering for experienced lawyers and trust professionals who advise international HNW and UHNW families through disputes and contentious matters.",
+      participantProfile: "Up to 48 peer-selected practitioners, typically with 15 to 25 years of experience, come together to exchange practical insight and address shared challenges.",
+      format: "There are no traditional presentations. The programme depends on active participation through two days of off-the-record, roundtable discussion and debate.",
+      atmosphere: "The Forum is designed as time away from the demands of the office: informal, face-to-face conversation that develops into a collegial community of trusted peers.",
+      principles: ["Peer selected", "Off the record", "Roundtable format", "Active participation"],
+    },
     agenda: [
       { date: "2026-10-14", time: "14:00", title: "Check-In", description: "Guest check-in opens at Lapa Palace.", kind: "logistics", venueName: "Lapa Palace" },
       { date: "2026-10-14", time: "15:30", endTime: "18:30", title: "Optional Private Tour of Belém", description: "Meet in the hotel lobby for departure. Participation is optional.", kind: "social", optional: true, venueName: "Meet in hotel lobby" },
@@ -576,11 +632,51 @@ export const FORUMS: Forum[] = [
       hotel: "Lapa Palace",
       hotelAddress: "Rua do Pau de Bandeira 4, 1249-021 Lisbon, Portugal",
       dressCode: "Business attire for Forum sessions; smart casual for evening events",
-      contactName: "Sarah Chen",
-      contactEmail: "s.chen@cambridgeforums.com",
-      contactPhone: "+1 416 703 1577 ext.305",
+      contactName: "Shóna Fox",
+      contactEmail: "sfox@cambridgeforums.com",
+      contactPhone: "+1 647 673 5281",
       notes: "Check-in begins Wednesday afternoon. Group departures for optional and evening activities leave from the hotel lobby.",
+      airportName: "Humberto Delgado Airport",
+      airportCode: "LIS",
+      airportTransfer: "Approximately 30 minutes by car from the airport to Lapa Palace.",
+      hotelCheckIn: "Wednesday, 14 October 2026",
+      hotelCheckOut: "Friday, 16 October 2026",
+      accommodation: "Two nights at Lapa Palace are included in the participant fee.",
+      inclusions: [
+        "Two nights of accommodation at Lapa Palace",
+        "All Forum meals and refreshments",
+        "Forum sessions and social programme",
+        "Online access to session materials",
+      ],
+      cleCpd: "CLE/CPD applications will be made and certificates will be issued based on attendance after the Forum, subject to jurisdictional approval.",
+      cancellationPolicy: [
+        { deadline: "Before 21 August 2026", outcome: "Full refund less a €250 administration fee." },
+        { deadline: "21 August–3 September 2026", outcome: "€1,000 credit toward a future programme, valid for two years." },
+        { deadline: "4 September 2026 or later", outcome: "The participant fee is non-refundable." },
+      ],
     },
+    representatives: [
+      {
+        id: "shona-fox",
+        name: "Shóna Fox",
+        title: "Forum Director, Financial Regulation, Enforcement & Transactions",
+        organization: "Cambridge Forums Inc.",
+        location: "Vancouver, Canada",
+        contactEmail: "sfox@cambridgeforums.com",
+        contactPhone: "+1 647 673 5281",
+        avatar: "SF",
+      },
+      {
+        id: "alyssa-da-silva",
+        name: "Alyssa Da Silva",
+        title: "Forum & Event Coordinator",
+        organization: "Cambridge Forums Inc.",
+        location: "Toronto, Canada",
+        contactEmail: "adasilva@cambridgeforums.com",
+        contactPhone: "+1 437 771 9174",
+        avatar: "AD",
+      },
+    ],
   },
   {
     id: "f002",

@@ -60,7 +60,7 @@ export default function DirectoryPage() {
     const normalizedQuery = query.toLowerCase();
     return members.filter(member => {
       const matchesQuery = !normalizedQuery || [
-        member.name, member.organization, member.title, member.location, ...member.expertise,
+        member.name, member.publishedName ?? "", member.preferredName ?? "", member.organization, member.title, member.location, ...member.expertise,
       ].some(value => value.toLowerCase().includes(normalizedQuery));
       const matchesPractice = !practice || member.practiceArea === practice;
       const matchesJurisdiction = !jurisdiction || member.jurisdiction === jurisdiction;
@@ -99,7 +99,10 @@ export default function DirectoryPage() {
               className={`h-8 px-3 rounded-md text-xs font-medium transition-colors ${
                 scope === value ? "bg-white text-[#1e2b45] shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
-            >{label}</button>
+            >
+              {label}
+              {value === "all" && <Badge className="ml-1.5 bg-[#c8975e]/15 text-[#9a6a33] border-0 text-[8px] h-4 px-1.5">Beta</Badge>}
+            </button>
           ))}
         </div>
 
@@ -177,10 +180,11 @@ export default function DirectoryPage() {
 
 function MemberCard({ member }: { member: Member }) {
   const tenure = getMemberTenure(member);
+  const displayName = member.publishedName || member.name;
   return (
     <article className="bg-white rounded-lg border border-border p-4 hover:border-[#c8975e]/50 hover:bg-[#c8975e]/[0.02] transition-all group">
       <div className="flex items-start gap-3">
-        <Link href={`/directory/${member.id}`} aria-label={`View ${member.name}'s profile`} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
+        <Link href={`/directory/${member.id}`} aria-label={`View ${displayName}'s profile`} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
           {member.photo ? (
             <img src={member.photo} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -189,14 +193,15 @@ function MemberCard({ member }: { member: Member }) {
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <Link href={`/directory/${member.id}`} className="font-medium text-sm text-foreground group-hover:text-[#9a6a33] transition-colors leading-tight hover:underline">{member.name}</Link>
+            <Link href={`/directory/${member.id}`} className="font-medium text-sm text-foreground group-hover:text-[#9a6a33] transition-colors leading-tight hover:underline">{displayName}</Link>
             <div className="flex items-center gap-1 flex-shrink-0">
-              {tenure.count > 0 && <Badge className="bg-[#1e2b45]/[0.07] text-[#1e2b45] text-[9px] px-1.5 h-4 border-0 font-medium">{tenure.count}-time participant</Badge>}
+              {tenure.count > 0 && <Badge className="bg-[#1e2b45]/[0.07] text-[#1e2b45] text-[9px] px-1.5 h-4 border-0 font-medium">{tenure.count} Forum{tenure.count === 1 ? "" : "s"}</Badge>}
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5 truncate">{member.title}</p>
           <p className="text-xs text-muted-foreground truncate">{member.organization}</p>
           <span className="flex items-center gap-1 text-[10px] text-muted-foreground mt-2"><Globe className="w-3 h-3" />{member.jurisdiction}</span>
+          {tenure.firstYear && <p className="text-[10px] text-muted-foreground mt-1">First attended {tenure.firstYear}</p>}
 
           <div className="mt-2 space-y-1">
             {member.contactPreference === "email" && (
@@ -215,7 +220,7 @@ function MemberCard({ member }: { member: Member }) {
             )}
             {member.contactPreference === "request-intro" && (
               <a
-                href={`mailto:webhelp@cambridgeforums.com?subject=${encodeURIComponent(`Introduction request: ${member.name}`)}`}
+                href={`mailto:webhelp@cambridgeforums.com?subject=${encodeURIComponent(`Introduction request: ${displayName}`)}`}
                 className="inline-flex items-center gap-1.5 text-[11px] text-[#1e2b45] font-medium border border-[#1e2b45]/20 px-2 py-1 rounded hover:bg-[#1e2b45]/5 transition-colors mt-1"
               ><Mail className="w-3 h-3 flex-shrink-0" />Request introduction</a>
             )}

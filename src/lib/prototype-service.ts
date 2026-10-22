@@ -21,11 +21,19 @@ export type ForumParticipation = {
   canAccessResources: boolean;
 };
 
+export type TravelDetails = {
+  arrivalDetails: string;
+  arrivalDateTime: string;
+  departureDetails: string;
+  departureDateTime: string;
+};
+
 type SavedRsvp = Pick<ForumParticipation, "status" | "comment">;
 
 const RSVP_KEY = "cf_rsvps";
 const MATERIAL_VIEWS_KEY = "cf_material_views";
 const SC_NOTES_KEY = "cf_sc_notes";
+const TRAVEL_DETAILS_KEY = "cf_travel_details";
 
 type MaterialViewState = Record<string, number>;
 
@@ -75,6 +83,36 @@ export async function submitRsvp(
   const saved = loadRsvps();
   saved[`${forumId}:${memberId}`] = { status, comment: comment.trim() };
   localStorage.setItem(RSVP_KEY, JSON.stringify(saved));
+}
+
+export function getTravelDetails(forumId: string, memberId: string): TravelDetails {
+  const empty: TravelDetails = {
+    arrivalDetails: "",
+    arrivalDateTime: "",
+    departureDetails: "",
+    departureDateTime: "",
+  };
+  if (typeof window === "undefined") return empty;
+  try {
+    const saved = JSON.parse(localStorage.getItem(TRAVEL_DETAILS_KEY) ?? "{}") as Record<string, TravelDetails>;
+    return saved[`${forumId}:${memberId}`] ?? empty;
+  } catch {
+    return empty;
+  }
+}
+
+export async function submitTravelDetails(forumId: string, memberId: string, details: TravelDetails): Promise<void> {
+  await new Promise(resolve => setTimeout(resolve, 450));
+  let saved: Record<string, TravelDetails> = {};
+  if (typeof window !== "undefined") {
+    try {
+      saved = JSON.parse(localStorage.getItem(TRAVEL_DETAILS_KEY) ?? "{}") as Record<string, TravelDetails>;
+    } catch {
+      saved = {};
+    }
+  }
+  saved[`${forumId}:${memberId}`] = details;
+  localStorage.setItem(TRAVEL_DETAILS_KEY, JSON.stringify(saved));
 }
 
 export async function submitProfileUpdate(memberId: string, updates: Partial<Member>): Promise<void> {
