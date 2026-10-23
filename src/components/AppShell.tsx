@@ -6,11 +6,12 @@ import Link from "next/link";
 import { getAuth, clearAuth } from "@/lib/auth";
 import { getResolvedMember } from "@/lib/store";
 import type { Member } from "@/lib/data";
-import { LayoutDashboard, Users, UserCircle, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, MessageCircle, Users, UserCircle, LogOut, Menu, X } from "lucide-react";
 
 const NAV = [
   { href: "/dashboard", label: "My Forums", icon: LayoutDashboard },
   { href: "/directory", label: "Directory", icon: Users },
+  { href: "/member-exchange", label: "Member Exchange", icon: MessageCircle },
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
 

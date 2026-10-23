@@ -348,7 +348,7 @@ function ForumDetail({
                         {item.topics.map(topic => <li key={topic}>{topic}</li>)}
                       </ul>
                     ) : null}
-                    <AgendaLinks item={item} forum={forum} />
+                    <AgendaLinks item={item} />
                   </div>
                 </details>
               ))}
@@ -546,7 +546,7 @@ function TravelField({ label, hint, children }: { label: string; hint?: string; 
   );
 }
 
-function AgendaLinks({ item, forum }: { item: AgendaItem; forum: Forum }) {
+function AgendaLinks({ item }: { item: AgendaItem }) {
   return (
     <>
       {item.speaker && (item.speakerMemberId ? (
@@ -579,25 +579,6 @@ function AgendaLinks({ item, forum }: { item: AgendaItem; forum: Forum }) {
           </div>
         </div>
       ) : null}
-      {item.sessionId && (
-        <div className="mt-2 pt-2 border-t border-border/70 flex items-center" aria-label={`${item.title} session sections`}>
-          <span className="h-8 px-3 rounded-l-md border border-[#1e2b45]/15 bg-[#1e2b45]/[0.07] text-[11px] font-medium text-[#1e2b45] inline-flex items-center">
-            Session details
-          </span>
-          <Link
-            href={`/forums/${forum.id}/sessions/${item.sessionId}/q-and-a`}
-            className="h-8 px-3 -ml-px rounded-r-md border border-[#1e2b45]/15 bg-white text-[11px] font-medium text-[#9a6a33] hover:bg-[#c8975e]/10 inline-flex items-center gap-1.5"
-          >
-            <MessageSquare className="w-3 h-3" />
-            Member Q&amp;A
-            {Boolean(item.qaNewCount) && (
-              <span className="rounded-full bg-[#a76d28] px-1.5 py-0.5 text-[9px] leading-none text-white">
-                {item.qaNewCount} new
-              </span>
-            )}
-          </Link>
-        </div>
-      )}
     </>
   );
 }

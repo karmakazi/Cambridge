@@ -16,8 +16,11 @@ export type QAReply = {
 
 export type QAPost = {
   id: string;
-  forumId: string;
-  sessionId: string;
+  forumId?: string;
+  sessionId?: string;
+  forumSeries?: string;
+  year: number;
+  topics: string[];
   authorId: string;
   authorName: string;
   authorOrganization: string;
@@ -48,8 +51,11 @@ const SEEDED_POSTS: QAPost[] = [
     authorId: "staff-shona-fox",
     authorName: "Shóna Fox",
     authorOrganization: "Cambridge Forums",
-    title: "Welcome to the Member Q&A",
-    body: "Use this space to share questions, examples, and issues you would like the discussion leaders to address. Please avoid identifying clients or sharing confidential information.",
+    title: "Welcome to the Member Exchange",
+    body: "Use this space to share questions, practical experience, and useful developments with the Cambridge community throughout the year. Please avoid identifying clients or sharing confidential information.",
+    forumSeries: "International Wealth Disputes",
+    year: 2026,
+    topics: ["Community", "Cambridge updates"],
     createdAt: "2026-10-20T14:00:00.000Z",
     pinned: true,
     moderator: true,
@@ -64,6 +70,9 @@ const SEEDED_POSTS: QAPost[] = [
     authorOrganization: "Holst & Richter",
     title: "How early should advisers introduce non-legal support?",
     body: "I would be interested in comparing when participants involve psychologists, mediators, or family-governance specialists, and how that affects the legal strategy.",
+    forumSeries: "International Wealth Disputes",
+    year: 2026,
+    topics: ["Family governance", "Mediation"],
     createdAt: "2026-10-21T09:35:00.000Z",
     replies: [
       {
@@ -85,7 +94,45 @@ const SEEDED_POSTS: QAPost[] = [
     authorOrganization: "Abernathy & Caldwell LLP",
     title: "Evidence of coercion in family wealth disputes",
     body: "What evidence has proved most useful when control or coercive behaviour is central to the dispute but is expressed indirectly through financial arrangements?",
+    forumSeries: "International Wealth Disputes",
+    year: 2026,
+    topics: ["Evidence", "Family disputes"],
     createdAt: "2026-10-21T15:20:00.000Z",
+    replies: [],
+  },
+  {
+    id: "exchange-ai-evidence",
+    authorId: "m001",
+    authorName: "Elena Marchetti",
+    authorOrganization: "Marchetti & Silveira LLP",
+    title: "Approaches to AI-generated evidence across jurisdictions",
+    body: "Has anyone developed a practical protocol for authenticating AI-generated or AI-modified evidence? I would be particularly interested in approaches taken by courts during the past year.",
+    forumSeries: "Data Privacy & AI Governance",
+    year: 2025,
+    topics: ["Artificial intelligence", "Evidence", "Professional practice"],
+    createdAt: "2025-11-12T16:15:00.000Z",
+    replies: [
+      {
+        id: "exchange-ai-reply",
+        authorId: "m003",
+        authorName: "Priya Anand",
+        authorOrganization: "Kapur Anand Legal",
+        body: "We have been separating provenance, chain-of-custody, and reliability questions rather than treating AI involvement as a single issue. I can share a short checklist at our next discussion.",
+        createdAt: "2025-11-13T10:05:00.000Z",
+      },
+    ],
+  },
+  {
+    id: "exchange-cross-border-mediation",
+    authorId: "m015",
+    authorName: "Robert Kowalski",
+    authorOrganization: "Kowalski Chambers",
+    title: "Recommendations for mediators in cross-border family disputes",
+    body: "I am compiling a shortlist of mediators with experience coordinating parallel proceedings and multilingual family groups. Recommendations from members would be very welcome.",
+    forumSeries: "International Wealth Disputes",
+    year: 2024,
+    topics: ["Mediation", "Cross-border disputes", "Referrals"],
+    createdAt: "2024-09-18T13:40:00.000Z",
     replies: [],
   },
 ];
@@ -111,7 +158,13 @@ function loadPosts(): QAPost[] {
   if (typeof window === "undefined") return SEEDED_POSTS;
   try {
     const raw = localStorage.getItem(QA_KEY);
-    return raw ? JSON.parse(raw) : SEEDED_POSTS;
+    const saved = raw ? JSON.parse(raw) as QAPost[] : [];
+    const savedIds = new Set(saved.map(post => post.id));
+    return [...saved, ...SEEDED_POSTS.filter(post => !savedIds.has(post.id))].map(post => ({
+      ...post,
+      year: post.year ?? new Date(post.createdAt).getFullYear(),
+      topics: post.topics ?? [],
+    }));
   } catch {
     return SEEDED_POSTS;
   }
@@ -130,6 +183,42 @@ export function canModerateMemberQA(forum: Forum, email: string): boolean {
   return normalized === forum.logistics.contactEmail.toLowerCase() || normalized.endsWith("@cambridgeforums.com");
 }
 
+export function canAccessMemberExchange(member: Member, email: string): boolean {
+  return Boolean(member.id) || email.toLowerCase().endsWith("@cambridgeforums.com");
+}
+
+export function canModerateMemberExchange(email: string): boolean {
+  return email.toLowerCase().endsWith("@cambridgeforums.com");
+}
+
+export function getExchangePosts(): QAPost[] {
+  return loadPosts().sort((a, b) => (
+    Number(Boolean(b.pinned)) - Number(Boolean(a.pinned))
+    || latestActivity(b).localeCompare(latestActivity(a))
+  ));
+}
+
+function latestActivity(post: QAPost): string {
+  return post.replies.reduce((latest, reply) => reply.createdAt > latest ? reply.createdAt : latest, post.createdAt);
+}
+
+export function createExchangePost(member: Member, title: string, body: string, topics: string[], year: number): QAPost {
+  const post: QAPost = {
+    id: crypto.randomUUID(),
+    authorId: member.id,
+    authorName: member.publishedName || member.name,
+    authorOrganization: member.organization,
+    title: title.trim(),
+    body: body.trim(),
+    topics: topics.map(topic => topic.trim()).filter(Boolean),
+    year,
+    createdAt: new Date().toISOString(),
+    replies: [],
+  };
+  savePosts([post, ...loadPosts()]);
+  return post;
+}
+
 export function getSessionPosts(forumId: string, sessionId: string): QAPost[] {
   return loadPosts()
     .filter(post => post.forumId === forumId && post.sessionId === sessionId)
@@ -144,6 +233,8 @@ export function createPost(forumId: string, sessionId: string, member: Member, t
     authorId: member.id,
     authorName: member.name,
     authorOrganization: member.organization,
+    year: new Date().getFullYear(),
+    topics: [],
     title: title.trim(),
     body: body.trim(),
     createdAt: new Date().toISOString(),

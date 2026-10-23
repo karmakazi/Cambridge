@@ -285,12 +285,12 @@ export default function ProfilePage() {
 
           <div id="notifications" className="bg-white rounded-lg border border-border p-6 scroll-mt-6">
             <h2 className="font-garamond text-base font-medium mb-1">Notification Settings</h2>
-            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">Member Q&amp;A notifications are on by default. Choose which activity you want to hear about.</p>
+            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">Member Exchange notifications are on by default. Choose which activity you want to hear about.</p>
             <div className="divide-y divide-border">
               {([
-                { key: "notifyQaNewPosts", label: "New Q&A posts", desc: "New questions posted in sessions for your registered Forums." },
-                { key: "notifyQaReplies", label: "Replies to my posts", desc: "Responses to questions or replies you have contributed." },
-                { key: "notifyQaMentions", label: "Mentions", desc: "Messages in which another participant mentions you." },
+                { key: "notifyQaNewPosts", label: "New Member Exchange discussions", desc: "New conversations shared with the Cambridge member community." },
+                { key: "notifyQaReplies", label: "Replies to my discussions", desc: "Responses to discussions or replies you have contributed." },
+                { key: "notifyQaMentions", label: "Mentions", desc: "Member Exchange messages in which another participant mentions you." },
               ] as const).map(option => (
                 <label key={option.key} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0 cursor-pointer">
                   <span>
