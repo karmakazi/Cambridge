@@ -12,6 +12,7 @@ export type AuthState = {
   loginMethod: "magic-link" | "password";
   role?: "participant" | "assistant";
   assistedMemberId?: string;
+  assistantPreview?: boolean;
 };
 
 export function getAuth(): AuthState | null {
@@ -124,6 +125,23 @@ export function loginAsAssistant(memberId = "m001"): AuthState | null {
     name: member.assistantAccess.name,
     loginMethod: "magic-link",
     role: "assistant",
+    assistantPreview: true,
+  };
+  setAuth(state);
+  return state;
+}
+
+export function exitAssistantPreview(): AuthState | null {
+  const current = getAuth();
+  if (!current?.assistantPreview || !current.assistedMemberId) return null;
+  const member = getAllResolvedMembers().find(candidate => candidate.id === current.assistedMemberId);
+  if (!member) return null;
+  const state: AuthState = {
+    memberId: member.id,
+    email: member.contactEmail,
+    name: member.name,
+    loginMethod: "magic-link",
+    role: "participant",
   };
   setAuth(state);
   return state;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { clearAuth, getAuth } from "@/lib/auth";
+import { clearAuth, exitAssistantPreview, getAuth } from "@/lib/auth";
 import { getResolvedMember } from "@/lib/store";
 import { getForumDirectorByEmail, getForumsForMember, type Forum, type Member } from "@/lib/data";
 import {
@@ -15,7 +15,7 @@ import {
   type TravelDetails,
 } from "@/lib/prototype-service";
 import { Badge } from "@/components/ui/badge";
-import { BriefcaseBusiness, Calendar, CheckCircle2, Eye, FileText, LogOut, MapPin, ShieldCheck } from "lucide-react";
+import { ArrowLeft, BriefcaseBusiness, Calendar, CheckCircle2, Eye, FileText, LogOut, MapPin, ShieldCheck } from "lucide-react";
 
 const RSVP_OPTIONS: Array<{ value: RsvpStatus; label: string }> = [
   { value: "attending", label: "Attending" },
@@ -27,6 +27,7 @@ export default function AssistantDashboardPage() {
   const router = useRouter();
   const [assistantName, setAssistantName] = useState("");
   const [participant, setParticipant] = useState<Member | null>(null);
+  const [isPreview, setIsPreview] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,6 +39,7 @@ export default function AssistantDashboardPage() {
       if (!member) { clearAuth(); router.replace("/"); return; }
       setAssistantName(auth.name);
       setParticipant(member);
+      setIsPreview(Boolean(auth.assistantPreview));
     });
     return () => { cancelled = true; };
   }, [router]);
@@ -45,6 +47,10 @@ export default function AssistantDashboardPage() {
   function signOut() {
     clearAuth();
     router.push("/");
+  }
+
+  function exitPreview() {
+    if (exitAssistantPreview()) router.push("/profile");
   }
 
   if (!participant) return null;
@@ -58,7 +64,10 @@ export default function AssistantDashboardPage() {
             <p className="font-garamond text-lg font-medium tracking-wide">Cambridge</p>
             <p className="label-caps text-[#B17E6B] -mt-0.5">Forums · Assistant Access</p>
           </div>
-          <button type="button" onClick={signOut} className="text-xs text-white/60 hover:text-white flex items-center gap-1.5"><LogOut className="w-3.5 h-3.5" />Sign out</button>
+          <div className="flex items-center gap-3">
+            {isPreview && <button type="button" onClick={exitPreview} className="text-xs text-cream hover:text-white flex items-center gap-1.5"><ArrowLeft className="w-3.5 h-3.5" />Exit assistant preview</button>}
+            <button type="button" onClick={signOut} className="text-xs text-white/60 hover:text-white flex items-center gap-1.5"><LogOut className="w-3.5 h-3.5" />Sign out</button>
+          </div>
         </div>
       </header>
 
