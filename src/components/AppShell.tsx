@@ -15,6 +15,34 @@ const NAV = [
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
 
+function SidebarContent({ member, pathname, onNavigate, onSignOut }: { member: Member; pathname: string; onNavigate: () => void; onSignOut: () => void }) {
+  return (
+    <div className="flex flex-col h-full">
+      <div className="px-6 py-6 border-b border-white/8">
+        <div className="flex flex-col">
+          <span className="font-garamond text-cream text-xl font-medium tracking-wide">Cambridge</span>
+          <span className="label-caps text-gold" style={{ marginTop: -2, fontSize: "0.6rem" }}>Forums · Members</span>
+        </div>
+      </div>
+      <nav className="flex-1 px-3 py-4 space-y-0.5">
+        {NAV.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+          return <Link key={href} href={href} onClick={onNavigate} className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all ${active ? "bg-white/10 text-cream" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}><Icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-gold" : ""}`} />{label}</Link>;
+        })}
+      </nav>
+      <div className="px-4 py-4 border-t border-white/8">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#B17E6B]/20">
+            {member.photo ? <img src={member.photo} alt={member.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><span className="text-gold text-xs font-semibold">{member.name.split(" ").map((name: string) => name[0]).join("").slice(0, 2)}</span></div>}
+          </div>
+          <div className="min-w-0"><p className="text-cream text-xs font-medium truncate">{member.name}</p><p className="text-white/35 text-[11px] truncate">{member.organization}</p></div>
+        </div>
+        <button onClick={onSignOut} className="flex items-center gap-2 text-white/35 hover:text-white/60 text-xs transition-colors"><LogOut className="w-3.5 h-3.5" />Sign out</button>
+      </div>
+    </div>
+  );
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -22,10 +50,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const auth = getAuth();
-    if (!auth) { router.replace("/"); return; }
-    const m = getResolvedMember(auth.memberId);
-    if (m) setMember(m);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      const auth = getAuth();
+      if (!auth) { router.replace("/"); return; }
+      if (auth.role === "assistant") { router.replace("/assistant-dashboard"); return; }
+      const resolvedMember = getResolvedMember(auth.memberId);
+      if (resolvedMember) setMember(resolvedMember);
+    });
+    return () => { cancelled = true; };
   }, [router, pathname]);
 
   function handleSignOut() {
@@ -35,73 +69,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   if (!member) return null;
 
-  const Sidebar = () => (
-    <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className="px-6 py-6 border-b border-white/8">
-        <div className="flex flex-col">
-          <span className="font-garamond text-cream text-xl font-medium tracking-wide">Cambridge</span>
-          <span className="label-caps text-gold" style={{ marginTop: -2, fontSize: "0.6rem" }}>Forums · Members</span>
-        </div>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all ${
-                active
-                  ? "bg-white/10 text-cream"
-                  : "text-white/50 hover:text-white/80 hover:bg-white/5"
-              }`}
-            >
-              <Icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-gold" : ""}`} />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* User */}
-      <div className="px-4 py-4 border-t border-white/8">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#c8975e]/20">
-            {member.photo ? (
-              <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-gold text-xs font-semibold">
-                  {member.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="min-w-0">
-            <p className="text-cream text-xs font-medium truncate">{member.name}</p>
-            <p className="text-white/35 text-[11px] truncate">{member.organization}</p>
-          </div>
-        </div>
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-2 text-white/35 hover:text-white/60 text-xs transition-colors"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          Sign out
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen flex bg-background">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-56 flex-col flex-shrink-0 bg-navy fixed inset-y-0 left-0 z-30">
-        <Sidebar />
+        <SidebarContent member={member} pathname={pathname} onNavigate={() => setMobileOpen(false)} onSignOut={handleSignOut} />
       </aside>
 
       {/* Mobile header */}
@@ -118,7 +90,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Mobile sidebar */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-30 bg-navy pt-14">
-          <Sidebar />
+          <SidebarContent member={member} pathname={pathname} onNavigate={() => setMobileOpen(false)} onSignOut={handleSignOut} />
         </div>
       )}
 

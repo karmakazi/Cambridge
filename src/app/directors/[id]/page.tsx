@@ -47,11 +47,11 @@ export default function ForumDirectorProfilePage() {
 
         <div className="bg-white rounded-lg border border-border p-5 sm:p-6 mb-4">
           <div className="flex items-start gap-4 sm:gap-5">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex-shrink-0 bg-[#1e2b45] text-cream flex items-center justify-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex-shrink-0 bg-[#253855] text-cream flex items-center justify-center">
               <span className="font-garamond text-xl sm:text-2xl font-medium">{director.avatar}</span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="label-caps text-[#9a6a33] mb-1">Your Forum Director</p>
+              <p className="label-caps text-[#8A5E50] mb-1">Your Forum Director</p>
               <h1 className="font-garamond text-2xl font-medium text-foreground leading-tight">{director.name}</h1>
               <p className="text-sm text-muted-foreground mt-1">{director.title}</p>
               <p className="text-sm font-medium text-foreground">{director.organization}</p>
@@ -67,10 +67,10 @@ export default function ForumDirectorProfilePage() {
         <div className="bg-white rounded-lg border border-border px-5 sm:px-6 py-5 mb-4">
           <h2 className="font-garamond text-base font-medium text-foreground mb-4">Contact</h2>
           <div className="space-y-3">
-            <a href={`mailto:${director.contactEmail}`} className="flex items-center gap-2.5 text-sm text-[#9a6a33] hover:underline break-all">
+            <a href={`mailto:${director.contactEmail}`} className="flex items-center gap-2.5 text-sm text-[#8A5E50] hover:underline break-all">
               <Mail className="w-4 h-4 flex-shrink-0" />{director.contactEmail}
             </a>
-            <a href={`tel:${director.contactPhone}`} className="flex items-center gap-2.5 text-sm text-foreground hover:text-[#9a6a33] transition-colors">
+            <a href={`tel:${director.contactPhone}`} className="flex items-center gap-2.5 text-sm text-foreground hover:text-[#8A5E50] transition-colors">
               <Phone className="w-4 h-4 flex-shrink-0" />{director.contactPhone}
             </a>
           </div>
@@ -81,7 +81,7 @@ export default function ForumDirectorProfilePage() {
           <div className="space-y-3">
             {directedForums.map((forum) => (
               <div key={forum.id} className="flex items-start gap-2.5">
-                <BriefcaseBusiness className="w-4 h-4 text-[#c8975e] mt-0.5 flex-shrink-0" />
+                <BriefcaseBusiness className="w-4 h-4 text-[#B17E6B] mt-0.5 flex-shrink-0" />
                 <div className="min-w-0">
                   <p className="text-sm text-foreground">{forum.title}</p>
                   <p className="text-xs text-muted-foreground">{forum.editionYear} · {forum.location}</p>

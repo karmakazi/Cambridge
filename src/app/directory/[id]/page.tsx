@@ -10,7 +10,7 @@ import { FORUMS, getForumEditionSummary } from "@/lib/data";
 import type { Member, Forum } from "@/lib/data";
 import { getForumHistory, getMemberTenure } from "@/lib/prototype-service";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Mail, Globe, MapPin, Phone, Building2, Users, ExternalLink } from "lucide-react";
+import { ArrowLeft, Award, Mail, Globe, MapPin, Phone, Building2, Users, ExternalLink } from "lucide-react";
 
 export default function MemberProfilePage() {
   const router = useRouter();
@@ -51,6 +51,8 @@ export default function MemberProfilePage() {
   const tenure = getMemberTenure(member);
   const forumHistory = getForumHistory(member);
   const displayName = member.publishedName || member.name;
+  const yearsWithCambridge = tenure.firstYear ? new Date().getFullYear() - tenure.firstYear : 0;
+  const milestoneYears = yearsWithCambridge >= 10 ? 10 : yearsWithCambridge >= 5 ? 5 : null;
 
   return (
     <AppShell>
@@ -64,12 +66,12 @@ export default function MemberProfilePage() {
         {/* Profile header */}
         <div className="bg-white rounded-lg border border-border p-6 mb-4">
           <div className="flex items-start gap-3 sm:gap-5">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden flex-shrink-0 bg-[#253855]/10">
               {member.photo ? (
                 <img src={member.photo} alt={displayName} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-xl font-semibold text-[#1e2b45]">{member.avatar}</span>
+                  <span className="text-xl font-semibold text-[#253855]">{member.avatar}</span>
                 </div>
               )}
             </div>
@@ -83,12 +85,17 @@ export default function MemberProfilePage() {
                 </div>
                 <div className="flex flex-wrap items-center sm:flex-col sm:items-end gap-1">
                   {tenure.count > 0 && (
-                    <Badge className="bg-[#1e2b45]/[0.07] text-[#1e2b45] border-0 text-[10px] font-medium">
+                    <Badge className="bg-[#253855]/[0.07] text-[#253855] border-0 text-[10px] font-medium">
                       {tenure.count}-time participant{tenure.firstYear ? ` · since ${tenure.firstYear}` : ""}
                     </Badge>
                   )}
+                  {milestoneYears && (
+                    <Badge className="bg-[#B17E6B]/10 text-[#7A5144] border border-[#B17E6B]/25 text-[10px] font-medium gap-1">
+                      <Award className="w-3 h-3" />{milestoneYears} years with Cambridge
+                    </Badge>
+                  )}
                   {isOwnProfile && (
-                    <Link href="/profile" className="text-xs text-[#c8975e] hover:underline">Edit profile</Link>
+                    <Link href="/profile" className="text-xs text-[#B17E6B] hover:underline">Edit profile</Link>
                   )}
                 </div>
               </div>
@@ -99,10 +106,19 @@ export default function MemberProfilePage() {
               </div>
 
               <div className="mt-2">
-                <span className="label-caps text-[#c8975e]">{member.practiceArea}</span>
+                <span className="label-caps text-[#B17E6B]">{member.practiceArea}</span>
               </div>
             </div>
           </div>
+          {milestoneYears && tenure.firstYear && (
+            <div className="mt-5 rounded-md border border-[#B17E6B]/25 bg-[#B17E6B]/[0.06] px-3 py-2.5 flex items-start gap-2.5">
+              <Award className="w-4 h-4 text-[#B17E6B] mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-medium text-foreground">Recognising {milestoneYears} years in the Cambridge community</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">First attended in {tenure.firstYear}; attendance does not need to be consecutive.</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Bio */}
@@ -135,12 +151,12 @@ export default function MemberProfilePage() {
                   <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
                     <span className="text-xs text-muted-foreground">{edition.year}</span>
                     {member.steeringCommitteeForums.includes(edition.id) && (
-                      <Badge className="bg-[#c8975e]/10 text-[#9a6a33] border-0 text-[9px] font-medium">
+                      <Badge className="bg-[#B17E6B]/10 text-[#8A5E50] border-0 text-[9px] font-medium">
                         Steering Committee
                       </Badge>
                     )}
                     {member.coChairForums?.includes(edition.id) && (
-                      <Badge className="bg-[#1e2b45] text-cream border-0 text-[9px] font-medium">
+                      <Badge className="bg-[#253855] text-cream border-0 text-[9px] font-medium">
                         Committee Co-Chair
                       </Badge>
                     )}
@@ -156,7 +172,7 @@ export default function MemberProfilePage() {
           <div className="bg-white rounded-lg border border-border px-6 py-5 mb-4">
             <h2 className="font-garamond text-base font-medium text-foreground mb-3">
               <span className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#c8975e]" />
+                <Users className="w-4 h-4 text-[#B17E6B]" />
                 Forums in Common
               </span>
             </h2>
@@ -168,7 +184,7 @@ export default function MemberProfilePage() {
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">Latest edition: {f.editionYear}</span>
                       {f.status === "upcoming" && (
-                        <Badge className="bg-[#1e2b45] text-cream text-[9px] px-1 h-4">Upcoming</Badge>
+                        <Badge className="bg-[#253855] text-cream text-[9px] px-1 h-4">Upcoming</Badge>
                       )}
                     </div>
                   </div>
@@ -204,7 +220,7 @@ export default function MemberProfilePage() {
               {!isOwnProfile && (
                 <a
                   href={`mailto:webhelp@cambridgeforums.com?subject=Introduction request: ${displayName}`}
-                  className="inline-flex items-center gap-2 text-sm text-[#1e2b45] font-medium border border-[#1e2b45]/20 px-4 py-2 rounded-md hover:bg-[#1e2b45]/5 transition-colors"
+                  className="inline-flex items-center gap-2 text-sm text-[#253855] font-medium border border-[#253855]/20 px-4 py-2 rounded-md hover:bg-[#253855]/5 transition-colors"
                 >
                   <Mail className="w-4 h-4" />
                   Request an introduction
@@ -215,14 +231,14 @@ export default function MemberProfilePage() {
             <div className="space-y-3">
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <a href={`mailto:${member.contactEmail}`} className="text-sm text-[#c8975e] hover:underline">
+                <a href={`mailto:${member.contactEmail}`} className="text-sm text-[#B17E6B] hover:underline">
                   {member.contactEmail}
                 </a>
               </div>
               {member.phone && (
                 <div className="flex items-center gap-2.5">
                   <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                  <a href={`tel:${member.phone}`} className="text-sm text-foreground hover:text-[#c8975e] transition-colors">
+                  <a href={`tel:${member.phone}`} className="text-sm text-foreground hover:text-[#B17E6B] transition-colors">
                     {member.phone}
                   </a>
                 </div>
@@ -236,7 +252,7 @@ export default function MemberProfilePage() {
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(member.address)}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-[#9a6a33] hover:underline"
+                      className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-[#8A5E50] hover:underline"
                     >
                       Open in Google Maps
                       <ExternalLink className="w-3 h-3" />

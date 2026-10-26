@@ -28,7 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   Award, BedDouble, Calendar, CalendarPlus, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Download,
-  ExternalLink, Eye, FileText, Globe, Loader2, Mail, MapPin, MessageSquare, Phone, Plane, Send, ShieldCheck, UserRound, Users, XCircle,
+  ExternalLink, Eye, FileText, Globe, Loader2, Mail, MapPin, Megaphone, MessageSquare, Phone, Plane, Send, ShieldCheck, UserRound, Users, X, XCircle,
 } from "lucide-react";
 
 const RSVP_OPTIONS: Array<{ value: RsvpStatus; label: string }> = [
@@ -57,8 +57,10 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
   const [saving, setSaving] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [unseenCount, setUnseenCount] = useState(() => getUnseenMaterialCount(memberId, forum));
+  const [dismissedNotices, setDismissedNotices] = useState<string[]>([]);
   const isUpcoming = forum.status === "upcoming";
   const director = getForumDirectorByEmail(forum.logistics.contactEmail);
+  const activeNotices = (forum.notices ?? []).filter(notice => !dismissedNotices.includes(notice.id));
 
   async function handleRsvp() {
     setSaving(true);
@@ -77,19 +79,24 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="label-caps text-gold">{forum.area}</span>
               <Badge className={isUpcoming
-                ? "bg-[#1e2b45] text-cream text-[10px] h-4 px-1.5 rounded"
+                ? "bg-[#253855] text-cream text-[10px] h-4 px-1.5 rounded"
                 : "bg-muted text-muted-foreground text-[10px] h-4 px-1.5 rounded"
               }>
                 {isUpcoming ? "Upcoming" : "Past"}
               </Badge>
               {isUpcoming && (
-                <Badge className="bg-[#c8975e]/10 text-[#9a6a33] text-[10px] h-4 px-1.5 rounded border-0">
+                <Badge className="bg-[#B17E6B]/10 text-[#8A5E50] text-[10px] h-4 px-1.5 rounded border-0">
                   {RSVP_LABELS[participation.status]}
                 </Badge>
               )}
               {unseenCount > 0 && participation.canAccessResources && (
-                <Badge className="bg-[#9a6a33] text-white text-[10px] h-4 px-1.5 rounded border-0">
+                <Badge className="bg-[#8A5E50] text-white text-[10px] h-4 px-1.5 rounded border-0">
                   {unseenCount} new {unseenCount === 1 ? "document" : "documents"}
+                </Badge>
+              )}
+              {activeNotices.length > 0 && (
+                <Badge className="bg-[#B17E6B] text-white text-[10px] h-4 px-1.5 rounded border-0 gap-1">
+                  <Megaphone className="w-2.5 h-2.5" />Event update
                 </Badge>
               )}
             </div>
@@ -103,7 +110,7 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
               rel="noreferrer"
               title={`Open ${forum.logistics.hotel} in Google Maps`}
               aria-label={`Open ${forum.logistics.hotel} in Google Maps`}
-              className="flex items-center gap-1 hover:text-[#9a6a33] hover:underline transition-colors"
+              className="flex items-center gap-1 hover:text-[#8A5E50] hover:underline transition-colors"
             >
               <MapPin className="w-3.5 h-3.5" />{forum.logistics.hotel} · {forum.location}
             </a>
@@ -111,16 +118,16 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
           <p className="mt-1 text-[11px] text-muted-foreground">
             Forum Director:{" "}
             {director ? (
-              <Link href={`/directors/${director.id}`} className="font-medium text-[#76502a] hover:underline">{director.name}</Link>
+              <Link href={`/directors/${director.id}`} className="font-medium text-[#7A5144] hover:underline">{director.name}</Link>
             ) : (
-              <a href={`mailto:${forum.logistics.contactEmail}`} className="font-medium text-[#76502a] hover:underline">{forum.logistics.contactName}</a>
+              <a href={`mailto:${forum.logistics.contactEmail}`} className="font-medium text-[#7A5144] hover:underline">{forum.logistics.contactName}</a>
             )}
           </p>
           {isUpcoming && (
             <a
               href={getCalendarFileUrl(forum)}
               download={`${forum.title}-${forum.editionYear}.ics`}
-              className="mt-2 h-8 w-fit px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"
+              className="mt-2 h-8 w-fit px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"
             >
               <Download className="w-3.5 h-3.5" />Download Calendar
             </a>
@@ -139,8 +146,20 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
 
       {open && (
         <div className="border-t border-border">
+          {activeNotices.map(notice => (
+            <div key={notice.id} className="mx-4 sm:mx-6 mt-5 rounded-lg border border-[#B17E6B]/35 bg-[#B17E6B]/[0.08] px-4 py-3 flex items-start gap-3" role="status">
+              <div className="w-8 h-8 rounded-full bg-[#B17E6B]/15 text-[#8A5E50] flex items-center justify-center flex-shrink-0"><Megaphone className="w-4 h-4" /></div>
+              <div className="min-w-0 flex-1">
+                <p className="label-caps text-[#8A5E50]">On-site notice</p>
+                <p className="text-sm font-medium mt-0.5">{notice.title}</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{notice.message}</p>
+                <p className="text-[11px] text-muted-foreground mt-1.5">{notice.publishedAt}</p>
+              </div>
+              <button type="button" onClick={() => setDismissedNotices(current => [...current, notice.id])} aria-label={`Dismiss ${notice.title}`} className="p-1 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+            </div>
+          ))}
           {isUpcoming && (
-            <div className="px-4 sm:px-6 py-5 bg-[#1e2b45]/[0.025] border-b border-border">
+            <div className="px-4 sm:px-6 py-5 bg-[#253855]/[0.025] border-b border-border">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
                   <p className="label-caps text-muted-foreground mb-1">Your response</p>
@@ -152,7 +171,7 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
                         onClick={() => { setSelectedStatus(option.value); setConfirmation(""); }}
                         className={`h-8 px-3 rounded-md border text-xs font-medium transition-colors ${
                           selectedStatus === option.value
-                            ? "border-[#c8975e] bg-[#c8975e]/10 text-[#76502a]"
+                            ? "border-[#B17E6B] bg-[#B17E6B]/10 text-[#7A5144]"
                             : "border-border bg-white text-muted-foreground hover:text-foreground"
                         }`}
                       >
@@ -165,7 +184,7 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
                   <div className="sm:text-right flex-shrink-0">
                     <p className="label-caps text-muted-foreground">Your forum fee</p>
                     <p className="font-garamond text-lg font-medium">{participation.fee}</p>
-                    <a href={forum.factSheetUrl} download className="text-xs text-[#9a6a33] hover:underline">View what&apos;s included</a>
+                    <a href={forum.factSheetUrl} download className="text-xs text-[#8A5E50] hover:underline">View what&apos;s included</a>
                   </div>
                 )}
               </div>
@@ -181,7 +200,7 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
                   type="button"
                   onClick={handleRsvp}
                   disabled={saving}
-                  className="h-9 sm:self-end px-4 rounded-md border border-[#1e2b45]/20 bg-white text-[#1e2b45] text-sm font-medium hover:bg-[#1e2b45]/5 disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="h-9 sm:self-end px-4 rounded-md border border-[#253855]/20 bg-white text-[#253855] text-sm font-medium hover:bg-[#253855]/5 disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Save response
                 </button>
@@ -248,13 +267,13 @@ function ForumDetail({
 
   return (
     <div>
-      <div className="mx-4 sm:mx-6 mt-5 rounded-lg border border-[#c8975e]/30 bg-[#c8975e]/[0.06] p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
+      <div className="mx-4 sm:mx-6 mt-5 rounded-lg border border-[#B17E6B]/30 bg-[#B17E6B]/[0.06] p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#1e2b45] text-cream flex items-center justify-center flex-shrink-0"><UserRound className="w-4 h-4" /></div>
+          <div className="w-8 h-8 rounded-full bg-[#253855] text-cream flex items-center justify-center flex-shrink-0"><UserRound className="w-4 h-4" /></div>
           <div className="min-w-0">
-            <p className="label-caps text-[#9a6a33]">Your Forum Director</p>
+            <p className="label-caps text-[#8A5E50]">Your Forum Director</p>
             {director ? (
-              <Link href={`/directors/${director.id}`} className="text-sm font-medium hover:text-[#9a6a33] hover:underline">{director.name}</Link>
+              <Link href={`/directors/${director.id}`} className="text-sm font-medium hover:text-[#8A5E50] hover:underline">{director.name}</Link>
             ) : (
               <p className="text-sm font-medium">{forum.logistics.contactName}</p>
             )}
@@ -262,12 +281,12 @@ function ForumDetail({
           </div>
         </div>
         <div className="flex gap-2 flex-wrap min-w-0">
-          {director && <Link href={`/directors/${director.id}`} className="h-8 px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"><UserRound className="w-3.5 h-3.5" />View profile</Link>}
-          <a href={`mailto:${forum.logistics.contactEmail}`} className="h-8 px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"><Mail className="w-3.5 h-3.5" />Email</a>
+          {director && <Link href={`/directors/${director.id}`} className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"><UserRound className="w-3.5 h-3.5" />View profile</Link>}
+          <a href={`mailto:${forum.logistics.contactEmail}`} className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"><Mail className="w-3.5 h-3.5" />Email</a>
           <a
             href={`mailto:${forum.logistics.contactEmail}?subject=${encodeURIComponent(`Meeting request: ${forum.title}`)}&body=${encodeURIComponent(`Hello ${forum.logistics.contactName},\n\nI would like to arrange a meeting regarding ${forum.title}.\n\nThank you.`)}`}
             title="Email the Forum Director to request a meeting"
-            className="h-8 px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5"
+            className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"
           ><CalendarPlus className="w-3.5 h-3.5" />Request a meeting</a>
         </div>
       </div>
@@ -278,7 +297,7 @@ function ForumDetail({
             key={item.id}
             onClick={() => setTab(item.id)}
             className={`py-3 mr-5 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
-              tab === item.id ? "border-[#c8975e] text-[#1e2b45]" : "border-transparent text-muted-foreground hover:text-foreground"
+              tab === item.id ? "border-[#B17E6B] text-[#253855]" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >{item.label}</button>
         ))}
@@ -287,12 +306,12 @@ function ForumDetail({
       <div className="px-4 sm:px-6 py-5 min-w-0">
         {tab === "overview" && forum.overview && (
           <div className="space-y-5">
-            <section className="rounded-lg border border-[#c8975e]/30 bg-[#c8975e]/[0.06] p-4 sm:p-5">
-              <p className="label-caps text-[#9a6a33] mb-2">About this Forum</p>
+            <section className="rounded-lg border border-[#B17E6B]/30 bg-[#B17E6B]/[0.06] p-4 sm:p-5">
+              <p className="label-caps text-[#8A5E50] mb-2">About this Forum</p>
               <h3 className="font-garamond text-xl font-medium text-foreground">Built around participation, not presentations.</h3>
               <p className="text-sm text-muted-foreground leading-relaxed mt-2 max-w-3xl">{forum.overview.summary}</p>
               <div className="flex flex-wrap gap-2 mt-4">
-                {forum.overview.principles.map(principle => <Badge key={principle} className="bg-white text-[#1e2b45] border border-[#1e2b45]/10 text-[10px] font-medium">{principle}</Badge>)}
+                {forum.overview.principles.map(principle => <Badge key={principle} className="bg-white text-[#253855] border border-[#253855]/10 text-[10px] font-medium">{principle}</Badge>)}
               </div>
             </section>
 
@@ -315,7 +334,7 @@ function ForumDetail({
                     type="button"
                     key={date}
                     onClick={() => setAgendaDate(date)}
-                    className={`rounded-md px-2 py-2 text-center transition-colors ${agendaDate === date ? "bg-white text-[#1e2b45] shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`rounded-md px-2 py-2 text-center transition-colors ${agendaDate === date ? "bg-white text-[#253855] shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     <span className="block text-[10px] font-semibold uppercase tracking-[0.14em]">Day {index + 1}</span>
                     <span className="block text-[11px] mt-0.5">{formatAgendaDay(date)}</span>
@@ -332,9 +351,9 @@ function ForumDetail({
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2 flex-wrap">
-                        {item.sessionNumber && <span className="label-caps text-[#9a6a33]">Session {item.sessionNumber}</span>}
-                        {item.optional && <Badge className="bg-[#c8975e]/12 text-[#9a6a33] border-0 text-[9px] h-4">Optional</Badge>}
-                        {item.kind === "social" && !item.optional && <Badge className="bg-[#1e2b45]/8 text-[#1e2b45] border-0 text-[9px] h-4">Social</Badge>}
+                        {item.sessionNumber && <span className="label-caps text-[#8A5E50]">Session {item.sessionNumber}</span>}
+                        {item.optional && <Badge className="bg-[#B17E6B]/12 text-[#8A5E50] border-0 text-[9px] h-4">Optional</Badge>}
+                        {item.kind === "social" && !item.optional && <Badge className="bg-[#253855]/8 text-[#253855] border-0 text-[9px] h-4">Social</Badge>}
                       </span>
                       <span className="block text-sm font-medium text-foreground mt-0.5">{item.title}</span>
                       {item.venueName && <span className="block text-[11px] text-muted-foreground mt-0.5">{item.venueName}</span>}
@@ -359,7 +378,7 @@ function ForumDetail({
         {tab === "materials" && (
           <div>
             <div className="flex justify-end mb-2">
-              <a href={forum.materialsBundleUrl} download className="inline-flex items-center gap-1.5 text-xs text-[#1e2b45] font-medium hover:text-[#9a6a33]">
+              <a href={forum.materialsBundleUrl} download className="inline-flex items-center gap-1.5 text-xs text-[#253855] font-medium hover:text-[#8A5E50]">
                 <Download className="w-3.5 h-3.5" />Download all
               </a>
             </div>
@@ -380,8 +399,8 @@ function ForumDetail({
 function OverviewCard({ icon, label, text }: { icon: ReactNode; label: string; text: string }) {
   return (
     <section className="rounded-lg border border-border bg-white p-4">
-      <div className="w-8 h-8 rounded-full bg-[#1e2b45]/8 text-[#1e2b45] flex items-center justify-center mb-3">{icon}</div>
-      <p className="label-caps text-[#9a6a33] mb-1.5">{label}</p>
+      <div className="w-8 h-8 rounded-full bg-[#253855]/8 text-[#253855] flex items-center justify-center mb-3">{icon}</div>
+      <p className="label-caps text-[#8A5E50] mb-1.5">{label}</p>
       <p className="text-xs text-muted-foreground leading-relaxed">{text}</p>
     </section>
   );
@@ -410,15 +429,15 @@ function LogisticsPanel({ forum, memberId }: { forum: Forum; memberId: string })
       <div className="grid gap-3 md:grid-cols-2">
         <section className="rounded-lg border border-border bg-white p-4">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#1e2b45]/8 text-[#1e2b45] flex items-center justify-center flex-shrink-0"><BedDouble className="w-4 h-4" /></div>
+            <div className="w-8 h-8 rounded-full bg-[#253855]/8 text-[#253855] flex items-center justify-center flex-shrink-0"><BedDouble className="w-4 h-4" /></div>
             <div className="min-w-0">
-              <p className="label-caps text-[#9a6a33] mb-1">Hotel &amp; accommodation</p>
+              <p className="label-caps text-[#8A5E50] mb-1">Hotel &amp; accommodation</p>
               <p className="font-medium">{logistics.hotel}</p>
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(logistics.hotelAddress)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-muted-foreground hover:text-[#9a6a33] hover:underline"
+                className="text-xs text-muted-foreground hover:text-[#8A5E50] hover:underline"
               >{logistics.hotelAddress}</a>
               {logistics.accommodation && <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{logistics.accommodation}</p>}
               {(logistics.hotelCheckIn || logistics.hotelCheckOut) && (
@@ -431,7 +450,7 @@ function LogisticsPanel({ forum, memberId }: { forum: Forum; memberId: string })
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(logistics.hotelAddress)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-[#9a6a33] hover:underline"
+                className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-[#8A5E50] hover:underline"
               >Open in Google Maps<ExternalLink className="w-3 h-3" /></a>
             </div>
           </div>
@@ -439,9 +458,9 @@ function LogisticsPanel({ forum, memberId }: { forum: Forum; memberId: string })
 
         <section className="rounded-lg border border-border bg-white p-4">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#1e2b45]/8 text-[#1e2b45] flex items-center justify-center flex-shrink-0"><Plane className="w-4 h-4" /></div>
+            <div className="w-8 h-8 rounded-full bg-[#253855]/8 text-[#253855] flex items-center justify-center flex-shrink-0"><Plane className="w-4 h-4" /></div>
             <div>
-              <p className="label-caps text-[#9a6a33] mb-1">Airport &amp; arrival</p>
+              <p className="label-caps text-[#8A5E50] mb-1">Airport &amp; arrival</p>
               {logistics.airportName ? (
                 <>
                   <p className="font-medium">{logistics.airportName}{logistics.airportCode ? ` (${logistics.airportCode})` : ""}</p>
@@ -455,10 +474,10 @@ function LogisticsPanel({ forum, memberId }: { forum: Forum; memberId: string })
       </div>
 
       {logistics.inclusions?.length ? (
-        <section className="rounded-lg border border-[#c8975e]/30 bg-[#c8975e]/[0.06] p-4">
-          <p className="label-caps text-[#9a6a33] mb-2">What your Forum fee includes</p>
+        <section className="rounded-lg border border-[#B17E6B]/30 bg-[#B17E6B]/[0.06] p-4">
+          <p className="label-caps text-[#8A5E50] mb-2">What your Forum fee includes</p>
           <ul className="grid gap-2 sm:grid-cols-2 text-xs text-foreground">
-            {logistics.inclusions.map(item => <li key={item} className="flex items-start gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#9a6a33] flex-shrink-0 mt-0.5" />{item}</li>)}
+            {logistics.inclusions.map(item => <li key={item} className="flex items-start gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#8A5E50] flex-shrink-0 mt-0.5" />{item}</li>)}
           </ul>
         </section>
       ) : null}
@@ -466,15 +485,15 @@ function LogisticsPanel({ forum, memberId }: { forum: Forum; memberId: string })
       <div className="grid gap-3 md:grid-cols-2">
         <section className="rounded-lg border border-border bg-white p-4">
           <div className="flex items-start gap-3">
-            <Award className="w-4 h-4 text-[#9a6a33] flex-shrink-0 mt-0.5" />
+            <Award className="w-4 h-4 text-[#8A5E50] flex-shrink-0 mt-0.5" />
             <div>
-              <p className="label-caps text-[#9a6a33] mb-1">CLE/CPD information</p>
+              <p className="label-caps text-[#8A5E50] mb-1">CLE/CPD information</p>
               <p className="text-xs text-muted-foreground leading-relaxed">{logistics.cleCpd ?? "Contact Cambridge for accreditation information for your jurisdiction."}</p>
             </div>
           </div>
         </section>
         <section className="rounded-lg border border-border bg-white p-4">
-          <p className="label-caps text-[#9a6a33] mb-1">Dress code</p>
+          <p className="label-caps text-[#8A5E50] mb-1">Dress code</p>
           <p className="text-xs text-muted-foreground leading-relaxed">{logistics.dressCode}</p>
         </section>
       </div>
@@ -482,7 +501,7 @@ function LogisticsPanel({ forum, memberId }: { forum: Forum; memberId: string })
       {logistics.cancellationPolicy?.length ? (
         <details className="group rounded-lg border border-border bg-white">
           <summary className="list-none cursor-pointer px-4 py-3 flex items-center justify-between gap-3">
-            <div><p className="label-caps text-[#9a6a33]">Cancellation policy</p><p className="text-xs text-muted-foreground mt-1">Registration is non-transferable. View refund and credit deadlines.</p></div>
+            <div><p className="label-caps text-[#8A5E50]">Cancellation policy</p><p className="text-xs text-muted-foreground mt-1">Registration is non-transferable. View refund and credit deadlines.</p></div>
             <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-180" />
           </summary>
           <div className="border-t border-border px-4 py-3 space-y-3">
@@ -500,7 +519,7 @@ function LogisticsPanel({ forum, memberId }: { forum: Forum; memberId: string })
         <section className="rounded-lg border border-border bg-white p-4">
           <div className="flex items-start justify-between gap-3 mb-4">
             <div>
-              <p className="label-caps text-[#9a6a33] mb-1">Your travel plans</p>
+              <p className="label-caps text-[#8A5E50] mb-1">Your travel plans</p>
               <h4 className="font-medium">Share your arrival and departure details</h4>
               <p className="text-xs text-muted-foreground mt-1">This helps Cambridge coordinate your hotel stay and on-site arrival. Prototype entries are saved only in this browser.</p>
             </div>
@@ -520,7 +539,7 @@ function LogisticsPanel({ forum, memberId }: { forum: Forum; memberId: string })
             </TravelField>
           </div>
           <div className="mt-4 flex items-center gap-3">
-            <button type="button" onClick={saveTravel} disabled={saving} className="h-9 px-4 rounded-md border border-[#1e2b45]/20 bg-white text-[#1e2b45] text-sm font-medium hover:bg-[#1e2b45]/5 disabled:opacity-60 inline-flex items-center gap-2">
+            <button type="button" onClick={saveTravel} disabled={saving} className="h-9 px-4 rounded-md border border-[#253855]/20 bg-white text-[#253855] text-sm font-medium hover:bg-[#253855]/5 disabled:opacity-60 inline-flex items-center gap-2">
               {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Save travel details
             </button>
             {saved && <span className="text-xs text-green-700 inline-flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Saved</span>}
@@ -529,8 +548,8 @@ function LogisticsPanel({ forum, memberId }: { forum: Forum; memberId: string })
       )}
 
       <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs">
-        <a href={`mailto:${logistics.contactEmail}`} className="text-[#9a6a33] hover:underline">Questions? Email {logistics.contactName}</a>
-        <a href={forum.websiteUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#9a6a33] hover:underline">Visit forum website<ExternalLink className="w-3 h-3" /></a>
+        <a href={`mailto:${logistics.contactEmail}`} className="text-[#8A5E50] hover:underline">Questions? Email {logistics.contactName}</a>
+        <a href={forum.websiteUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#8A5E50] hover:underline">Visit forum website<ExternalLink className="w-3 h-3" /></a>
       </div>
     </div>
   );
@@ -550,16 +569,16 @@ function AgendaLinks({ item }: { item: AgendaItem }) {
   return (
     <>
       {item.speaker && (item.speakerMemberId ? (
-        <Link href={`/directory/${item.speakerMemberId}`} className="inline-flex items-center gap-1 text-xs text-[#9a6a33] mt-1 hover:underline">
+        <Link href={`/directory/${item.speakerMemberId}`} className="inline-flex items-center gap-1 text-xs text-[#8A5E50] mt-1 hover:underline">
           {item.speaker}<ChevronRight className="w-3 h-3" />
         </Link>
-      ) : <p className="text-xs text-[#9a6a33] mt-1">{item.speaker}</p>)}
+      ) : <p className="text-xs text-[#8A5E50] mt-1">{item.speaker}</p>)}
       {item.venueAddress && (
         <a
           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.venueAddress)}`}
           target="_blank"
           rel="noreferrer"
-          className="flex items-start gap-1.5 mt-1 text-xs text-[#9a6a33] hover:underline"
+          className="flex items-start gap-1.5 mt-1 text-xs text-[#8A5E50] hover:underline"
         >
           <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
           <span>{item.venueName} · {item.venueAddress}</span>
@@ -598,9 +617,9 @@ function SessionMaterials({ forum, memberId, onMaterialSeen }: { forum: Forum; m
         const materials = forum.materials.filter(material => material.sessionId === session.sessionId);
         return (
           <section key={session.sessionId} className="rounded-lg border border-border overflow-hidden">
-            <div className="bg-[#1e2b45]/[0.045] px-4 py-3 border-b border-border sm:flex sm:items-start sm:justify-between gap-5">
+            <div className="bg-[#253855]/[0.045] px-4 py-3 border-b border-border sm:flex sm:items-start sm:justify-between gap-5">
               <div>
-                <p className="label-caps text-[#9a6a33]">Session {session.sessionNumber}</p>
+                <p className="label-caps text-[#8A5E50]">Session {session.sessionNumber}</p>
                 <h3 className="font-garamond text-lg font-medium mt-0.5">{session.title}</h3>
               </div>
               {session.discussionLeaders?.length ? (
@@ -646,12 +665,12 @@ function MaterialGroup({
   const [seenInSession, setSeenInSession] = useState<Set<string>>(() => new Set());
   if (!materials.length) return null;
   return (
-    <section className={`mb-5 last:mb-0 rounded-lg ${required ? "border border-[#c8975e]/35 bg-[#c8975e]/[0.055]" : "border border-border"}`}>
+    <section className={`mb-5 last:mb-0 rounded-lg ${required ? "border border-[#B17E6B]/35 bg-[#B17E6B]/[0.055]" : "border border-border"}`}>
       <div className="px-4 py-3 border-b border-inherit">
         <div className="flex items-center gap-2">
-          <FileText className={`w-4 h-4 ${required ? "text-[#9a6a33]" : "text-muted-foreground"}`} />
+          <FileText className={`w-4 h-4 ${required ? "text-[#8A5E50]" : "text-muted-foreground"}`} />
           <h3 className="font-garamond text-base font-medium">{title}</h3>
-          {required && <Badge className="bg-[#9a6a33] text-white border-0 text-[9px] h-4">Required</Badge>}
+          {required && <Badge className="bg-[#8A5E50] text-white border-0 text-[9px] h-4">Required</Badge>}
         </div>
         <p className="text-xs text-muted-foreground mt-0.5 ml-6">{description}</p>
       </div>
@@ -663,7 +682,7 @@ function MaterialGroup({
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm text-foreground">{material.title}</p>
-                  {unseen && <Badge className="bg-[#1e2b45] text-cream border-0 text-[9px] h-4">{material.revision > 1 ? "Updated" : "New"}</Badge>}
+                  {unseen && <Badge className="bg-[#253855] text-cream border-0 text-[9px] h-4">{material.revision > 1 ? "Updated" : "New"}</Badge>}
                 </div>
                 <p className="text-xs text-muted-foreground capitalize">{material.type} · {material.size} · Added {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(new Date(`${material.publishedAt}T12:00:00`))}</p>
               </div>
@@ -677,7 +696,7 @@ function MaterialGroup({
                   }
                   window.open(material.url, "_blank", "noopener,noreferrer");
                 }}
-                className="flex items-center gap-1.5 text-xs text-[#1e2b45] hover:text-[#9a6a33] font-medium transition-colors flex-shrink-0"
+                className="flex items-center gap-1.5 text-xs text-[#253855] hover:text-[#8A5E50] font-medium transition-colors flex-shrink-0"
               >
                 <Eye className="w-3.5 h-3.5" />Open
               </button>
@@ -702,17 +721,17 @@ function SteeringCommitteeWorkspace({ forum, member }: { forum: Forum; member: M
 
   return (
     <div>
-      <div className="rounded-lg bg-[#1e2b45] text-cream p-4 mb-4">
-        <div className="flex items-center gap-2"><MessageSquare className="w-4 h-4 text-[#d4aa7a]" /><p className="text-sm font-medium">Private Steering Committee workspace</p></div>
+      <div className="rounded-lg bg-[#253855] text-cream p-4 mb-4">
+        <div className="flex items-center gap-2"><MessageSquare className="w-4 h-4 text-[#C79786]" /><p className="text-sm font-medium">Private Steering Committee workspace</p></div>
         <p className="text-xs text-cream/65 mt-1">A lightweight concept for sharing session ideas, candidate notes, and working documents between meetings.</p>
       </div>
       <div className="flex gap-2 mb-4">
         <textarea value={draft} onChange={event => setDraft(event.target.value)} rows={2} placeholder="Suggest a session idea or leave a note for the committee…" className="min-w-0 w-full flex-1 text-sm rounded-md border border-input bg-white px-3 py-2 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none" />
-        <button type="button" onClick={postNote} disabled={!draft.trim()} className="self-end h-9 px-3 rounded-md bg-[#1e2b45] text-cream text-xs font-medium disabled:opacity-50 inline-flex items-center gap-1.5"><Send className="w-3.5 h-3.5" />Post</button>
+        <button type="button" onClick={postNote} disabled={!draft.trim()} className="self-end h-9 px-3 rounded-md bg-[#253855] text-cream text-xs font-medium disabled:opacity-50 inline-flex items-center gap-1.5"><Send className="w-3.5 h-3.5" />Post</button>
       </div>
       <div className="rounded-lg border border-border p-3 mb-3 flex items-center justify-between gap-3">
         <div><p className="text-sm font-medium">Draft 2026 discussion themes</p><p className="text-xs text-muted-foreground">Working document · Updated 14 October</p></div>
-        <a href="/materials/prototype-resource.txt" download className="text-xs font-medium text-[#9a6a33] inline-flex items-center gap-1"><Download className="w-3.5 h-3.5" />Download</a>
+        <a href="/materials/prototype-resource.txt" download className="text-xs font-medium text-[#8A5E50] inline-flex items-center gap-1"><Download className="w-3.5 h-3.5" />Download</a>
       </div>
       {notes.length ? notes.map(note => (
         <div key={note.id} className="border-b border-border py-3 last:border-0">
@@ -739,21 +758,21 @@ function ParticipantList({ forum }: { forum: Forum }) {
           const isSteeringCommittee = participant.steeringCommitteeForums.includes(forum.id);
           const displayName = participant.publishedName || participant.name;
           return (
-            <article key={participant.id} className="rounded-lg border border-border bg-white p-4 hover:border-[#c8975e]/50 transition-colors">
+            <article key={participant.id} className="rounded-lg border border-border bg-white p-4 hover:border-[#B17E6B]/50 transition-colors">
               <div className="flex items-start gap-3">
-                <Link href={`/directory/${participant.id}`} aria-label={`View ${displayName}'s profile`} className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
+                <Link href={`/directory/${participant.id}`} aria-label={`View ${displayName}'s profile`} className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-[#253855]/10">
                   {participant.photo ? (
                     <img src={participant.photo} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="w-full h-full flex items-center justify-center text-xs font-semibold text-[#1e2b45]">{participant.avatar}</span>
+                    <span className="w-full h-full flex items-center justify-center text-xs font-semibold text-[#253855]">{participant.avatar}</span>
                   )}
                 </Link>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <Link href={`/directory/${participant.id}`} className="text-sm font-medium hover:text-[#9a6a33] hover:underline">{displayName}</Link>
+                    <Link href={`/directory/${participant.id}`} className="text-sm font-medium hover:text-[#8A5E50] hover:underline">{displayName}</Link>
                     <div className="flex flex-wrap justify-end gap-1">
-                      {isCoChair && <Badge className="bg-[#1e2b45] text-cream border-0 text-[9px] h-4">Committee Co-Chair</Badge>}
-                      {isSteeringCommittee && <Badge className="bg-[#c8975e]/12 text-[#9a6a33] border-0 text-[9px] h-4">Steering Committee</Badge>}
+                      {isCoChair && <Badge className="bg-[#253855] text-cream border-0 text-[9px] h-4">Committee Co-Chair</Badge>}
+                      {isSteeringCommittee && <Badge className="bg-[#B17E6B]/12 text-[#8A5E50] border-0 text-[9px] h-4">Steering Committee</Badge>}
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">{participant.title}</p>
@@ -767,12 +786,12 @@ function ParticipantList({ forum }: { forum: Forum }) {
                 </p>
                 <div className="flex items-center gap-3">
                   {participant.contactPreference === "email" && participant.contactEmail && (
-                    <a href={`mailto:${participant.contactEmail}`} className="text-[11px] text-[#9a6a33] hover:underline inline-flex items-center gap-1"><Mail className="w-3 h-3" />Email</a>
+                    <a href={`mailto:${participant.contactEmail}`} className="text-[11px] text-[#8A5E50] hover:underline inline-flex items-center gap-1"><Mail className="w-3 h-3" />Email</a>
                   )}
                   {participant.contactPreference === "email" && participant.phone && (
                     <a href={`tel:${participant.phone}`} className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Phone className="w-3 h-3" />Phone</a>
                   )}
-                  <Link href={`/directory/${participant.id}`} className="text-[11px] font-medium text-[#1e2b45] hover:underline">View profile</Link>
+                  <Link href={`/directory/${participant.id}`} className="text-[11px] font-medium text-[#253855] hover:underline">View profile</Link>
                 </div>
               </div>
             </article>
@@ -783,14 +802,14 @@ function ParticipantList({ forum }: { forum: Forum }) {
       {forum.representatives?.length ? (
         <section className="mt-7 pt-6 border-t border-border">
           <div className="mb-4">
-            <p className="label-caps text-[#9a6a33]">Cambridge Forums</p>
+            <p className="label-caps text-[#8A5E50]">Cambridge Forums</p>
             <h3 className="font-garamond text-lg font-medium mt-0.5">Cambridge representatives</h3>
             <p className="text-xs text-muted-foreground mt-0.5">Your on-site contacts for programme, attendance, and event support.</p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {forum.representatives.map(representative => (
-              <article key={representative.id} className="rounded-lg border border-[#c8975e]/30 bg-[#c8975e]/[0.045] p-4 flex items-start gap-3">
-                <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45] text-cream flex items-center justify-center">
+              <article key={representative.id} className="rounded-lg border border-[#B17E6B]/30 bg-[#B17E6B]/[0.045] p-4 flex items-start gap-3">
+                <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[#253855] text-cream flex items-center justify-center">
                   {representative.photo ? <img src={representative.photo} alt="" className="w-full h-full object-cover" /> : <span className="text-xs font-semibold">{representative.avatar}</span>}
                 </div>
                 <div className="min-w-0">
@@ -798,7 +817,7 @@ function ParticipantList({ forum }: { forum: Forum }) {
                   <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{representative.title}</p>
                   <p className="text-[11px] text-muted-foreground mt-1">{representative.location}</p>
                   <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
-                    <a href={`mailto:${representative.contactEmail}`} className="text-[11px] text-[#9a6a33] hover:underline inline-flex items-center gap-1"><Mail className="w-3 h-3" />Email</a>
+                    <a href={`mailto:${representative.contactEmail}`} className="text-[11px] text-[#8A5E50] hover:underline inline-flex items-center gap-1"><Mail className="w-3 h-3" />Email</a>
                     <a href={`tel:${representative.contactPhone}`} className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Phone className="w-3 h-3" />{representative.contactPhone}</a>
                   </div>
                 </div>
@@ -838,7 +857,7 @@ export default function DashboardPage() {
     <AppShell>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         <div className="mb-8">
-          <p className="label-caps text-[#c8975e] mb-1">My Forums</p>
+          <p className="label-caps text-[#B17E6B] mb-1">My Forums</p>
           <h1 className="font-garamond text-3xl font-medium text-foreground">Good to see you, {member.name.split(" ")[0]}.</h1>
           <p className="text-muted-foreground text-sm mt-1">Respond to invitations and find everything Cambridge has shared with you.</p>
         </div>
@@ -847,7 +866,7 @@ export default function DashboardPage() {
           <section className="mb-8">
             <div className="flex items-center gap-2 mb-3">
               <h2 className="font-garamond text-xl font-medium">Upcoming Forums</h2>
-              <span className="bg-[#1e2b45] text-cream text-[10px] px-1.5 py-0.5 rounded font-medium">{upcoming.length}</span>
+              <span className="bg-[#253855] text-cream text-[10px] px-1.5 py-0.5 rounded font-medium">{upcoming.length}</span>
             </div>
             <div className="space-y-3">{upcoming.map(forum => <ForumCard key={forum.id} forum={forum} member={member} />)}</div>
           </section>

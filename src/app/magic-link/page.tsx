@@ -15,9 +15,9 @@ function MagicLinkHandler() {
     if (!email) return;
     // Simulate token verification delay
     const t = setTimeout(() => {
-      loginWithMagicLink(email);
+      const auth = loginWithMagicLink(email);
       setStatus("success");
-      setTimeout(() => router.push("/dashboard"), 800);
+      setTimeout(() => router.push(auth.role === "assistant" ? "/assistant-dashboard" : "/dashboard"), 800);
     }, 1200);
     return () => clearTimeout(t);
   }, [email, router]);

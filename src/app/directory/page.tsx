@@ -80,7 +80,7 @@ export default function DirectoryPage() {
     <AppShell>
       <div className="max-w-4xl mx-auto px-6 py-10">
         <div className="mb-6">
-          <p className="label-caps text-[#c8975e] mb-1">Member Directory</p>
+          <p className="label-caps text-[#B17E6B] mb-1">Member Directory</p>
           <h1 className="font-garamond text-3xl font-medium text-foreground">Find the right person.</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Start with people in your forums, or explore the wider Cambridge network.
@@ -97,11 +97,11 @@ export default function DirectoryPage() {
               key={value}
               onClick={() => { setScope(value); setForumId(""); }}
               className={`h-8 px-3 rounded-md text-xs font-medium transition-colors ${
-                scope === value ? "bg-white text-[#1e2b45] shadow-sm" : "text-muted-foreground hover:text-foreground"
+                scope === value ? "bg-white text-[#253855] shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {label}
-              {value === "all" && <Badge className="ml-1.5 bg-[#c8975e]/15 text-[#9a6a33] border-0 text-[8px] h-4 px-1.5">Beta</Badge>}
+              {value === "all" && <Badge className="ml-1.5 bg-[#B17E6B]/15 text-[#8A5E50] border-0 text-[8px] h-4 px-1.5">Beta</Badge>}
             </button>
           ))}
         </div>
@@ -123,7 +123,7 @@ export default function DirectoryPage() {
               aria-label="Filter by forum"
               value={forumId}
               onChange={event => setForumId(event.target.value)}
-              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#c8975e]"
+              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#B17E6B]"
             >
               <option value="">All my forums</option>
               {forums.map(forum => <option key={forum.id} value={forum.id}>{forum.title}</option>)}
@@ -133,7 +133,7 @@ export default function DirectoryPage() {
               aria-label="Filter by practice area"
               value={practice}
               onChange={event => setPractice(event.target.value)}
-              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#c8975e]"
+              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#B17E6B]"
             >
               <option value="">All Practice Areas</option>
               {PRACTICE_AREAS.map(value => <option key={value} value={value}>{value}</option>)}
@@ -143,7 +143,7 @@ export default function DirectoryPage() {
               aria-label="Filter by jurisdiction"
               value={jurisdiction}
               onChange={event => setJurisdiction(event.target.value)}
-              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#c8975e]"
+              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#B17E6B]"
             >
               <option value="">All Jurisdictions</option>
               {JURISDICTIONS.map(value => <option key={value} value={value}>{value}</option>)}
@@ -170,7 +170,7 @@ export default function DirectoryPage() {
           <div className="text-center py-16 text-muted-foreground">
             <Search className="w-8 h-8 mx-auto mb-3 opacity-30" />
             <p className="text-sm">No members match your search.</p>
-            <button type="button" onClick={() => { setQuery(""); clearFilters(); }} className="mt-2 text-xs text-[#9a6a33] hover:underline">Clear all filters</button>
+            <button type="button" onClick={() => { setQuery(""); clearFilters(); }} className="mt-2 text-xs text-[#8A5E50] hover:underline">Clear all filters</button>
           </div>
         )}
       </div>
@@ -182,20 +182,20 @@ function MemberCard({ member }: { member: Member }) {
   const tenure = getMemberTenure(member);
   const displayName = member.publishedName || member.name;
   return (
-    <article className="bg-white rounded-lg border border-border p-4 hover:border-[#c8975e]/50 hover:bg-[#c8975e]/[0.02] transition-all group">
+    <article className="bg-white rounded-lg border border-border p-4 hover:border-[#B17E6B]/50 hover:bg-[#B17E6B]/[0.02] transition-all group">
       <div className="flex items-start gap-3">
-        <Link href={`/directory/${member.id}`} aria-label={`View ${displayName}'s profile`} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
+        <Link href={`/directory/${member.id}`} aria-label={`View ${displayName}'s profile`} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[#253855]/10">
           {member.photo ? (
             <img src={member.photo} alt="" className="w-full h-full object-cover" />
           ) : (
-            <span className="w-full h-full flex items-center justify-center text-xs font-semibold text-[#1e2b45]">{member.avatar}</span>
+            <span className="w-full h-full flex items-center justify-center text-xs font-semibold text-[#253855]">{member.avatar}</span>
           )}
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <Link href={`/directory/${member.id}`} className="font-medium text-sm text-foreground group-hover:text-[#9a6a33] transition-colors leading-tight hover:underline">{displayName}</Link>
+            <Link href={`/directory/${member.id}`} className="font-medium text-sm text-foreground group-hover:text-[#8A5E50] transition-colors leading-tight hover:underline">{displayName}</Link>
             <div className="flex items-center gap-1 flex-shrink-0">
-              {tenure.count > 0 && <Badge className="bg-[#1e2b45]/[0.07] text-[#1e2b45] text-[9px] px-1.5 h-4 border-0 font-medium">{tenure.count} Forum{tenure.count === 1 ? "" : "s"}</Badge>}
+              {tenure.count > 0 && <Badge className="bg-[#253855]/[0.07] text-[#253855] text-[9px] px-1.5 h-4 border-0 font-medium">{tenure.count} Forum{tenure.count === 1 ? "" : "s"}</Badge>}
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5 truncate">{member.title}</p>
@@ -207,7 +207,7 @@ function MemberCard({ member }: { member: Member }) {
             {member.contactPreference === "email" && (
               <>
                 {member.contactEmail && (
-                  <a href={`mailto:${member.contactEmail}`} className="flex items-center gap-1.5 text-[11px] text-[#9a6a33] hover:underline truncate max-w-full">
+                  <a href={`mailto:${member.contactEmail}`} className="flex items-center gap-1.5 text-[11px] text-[#8A5E50] hover:underline truncate max-w-full">
                     <Mail className="w-3 h-3 flex-shrink-0" /><span className="truncate">{member.contactEmail}</span>
                   </a>
                 )}
@@ -221,7 +221,7 @@ function MemberCard({ member }: { member: Member }) {
             {member.contactPreference === "request-intro" && (
               <a
                 href={`mailto:webhelp@cambridgeforums.com?subject=${encodeURIComponent(`Introduction request: ${displayName}`)}`}
-                className="inline-flex items-center gap-1.5 text-[11px] text-[#1e2b45] font-medium border border-[#1e2b45]/20 px-2 py-1 rounded hover:bg-[#1e2b45]/5 transition-colors mt-1"
+                className="inline-flex items-center gap-1.5 text-[11px] text-[#253855] font-medium border border-[#253855]/20 px-2 py-1 rounded hover:bg-[#253855]/5 transition-colors mt-1"
               ><Mail className="w-3 h-3 flex-shrink-0" />Request introduction</a>
             )}
           </div>

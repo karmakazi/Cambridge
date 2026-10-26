@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
-import { getAuth } from "@/lib/auth";
+import { getAuth, loginAsAssistant } from "@/lib/auth";
 import { getResolvedMember } from "@/lib/store";
 import { submitProfileUpdate } from "@/lib/prototype-service";
 import type { Member } from "@/lib/data";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, Clock3, Info, Loader2, Upload } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, CheckCircle2, Clock3, Info, Loader2, ShieldCheck, Upload } from "lucide-react";
 
 const CONTACT_PREFS = [
   { value: "email", label: "Show email address", desc: "Your email and phone are visible to other logged-in members." },
@@ -34,9 +34,13 @@ export default function ProfilePage() {
     expertise: "",
     contactPreference: "email" as Member["contactPreference"],
     discoverable: true,
-    notifyQaNewPosts: true,
-    notifyQaReplies: true,
-    notifyQaMentions: true,
+    notifyQaDigest: true,
+    notifyQaNewPosts: false,
+    notifyQaReplies: false,
+    notifyQaMentions: false,
+    assistantEnabled: false,
+    assistantName: "",
+    assistantEmail: "",
     photo: "",
     photoReviewStatus: undefined as Member["photoReviewStatus"],
   });
@@ -66,9 +70,13 @@ export default function ProfilePage() {
         expertise: resolvedMember.expertise.join(", "),
         contactPreference: resolvedMember.contactPreference,
         discoverable: resolvedMember.discoverable,
-        notifyQaNewPosts: resolvedMember.notifyQaNewPosts ?? true,
-        notifyQaReplies: resolvedMember.notifyQaReplies ?? true,
-        notifyQaMentions: resolvedMember.notifyQaMentions ?? true,
+        notifyQaDigest: resolvedMember.notifyQaDigest ?? true,
+        notifyQaNewPosts: resolvedMember.notifyQaNewPosts ?? false,
+        notifyQaReplies: resolvedMember.notifyQaReplies ?? false,
+        notifyQaMentions: resolvedMember.notifyQaMentions ?? false,
+        assistantEnabled: resolvedMember.assistantAccess?.enabled ?? false,
+        assistantName: resolvedMember.assistantAccess?.name ?? "",
+        assistantEmail: resolvedMember.assistantAccess?.email ?? "",
         photo: resolvedMember.photo,
         photoReviewStatus: resolvedMember.photoReviewStatus,
       });
@@ -96,6 +104,12 @@ export default function ProfilePage() {
         notifyQaNewPosts: form.notifyQaNewPosts,
         notifyQaReplies: form.notifyQaReplies,
         notifyQaMentions: form.notifyQaMentions,
+        notifyQaDigest: form.notifyQaDigest,
+        assistantAccess: {
+          enabled: form.assistantEnabled,
+          name: form.assistantName,
+          email: form.assistantEmail,
+        },
         photo: form.photo,
         photoReviewStatus: form.photoReviewStatus,
       };
@@ -149,7 +163,7 @@ export default function ProfilePage() {
       <div className="max-w-xl mx-auto px-6 py-10">
         <div className="flex items-start justify-between gap-4 mb-8">
           <div>
-            <p className="label-caps text-[#c8975e] mb-1">My Profile</p>
+            <p className="label-caps text-[#B17E6B] mb-1">My Profile</p>
             <h1 className="font-garamond text-3xl font-medium text-foreground">Edit your profile</h1>
             <p className="text-muted-foreground text-sm mt-1">Changes are saved automatically shortly after every edit.</p>
           </div>
@@ -165,17 +179,17 @@ export default function ProfilePage() {
             <h2 className="font-garamond text-base font-medium">Professional Details</h2>
 
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-[#1e2b45]/10">
+              <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-[#253855]/10">
                 {form.photo ? (
                   <img src={form.photo} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center"><span className="text-lg font-semibold text-[#1e2b45]">{member.avatar}</span></div>
+                  <div className="w-full h-full flex items-center justify-center"><span className="text-lg font-semibold text-[#253855]">{member.avatar}</span></div>
                 )}
               </div>
               <div className="flex-1">
                 <p className="font-medium text-foreground">{member.name}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Your account name remains managed by Cambridge.</p>
-                <label className="mt-2 h-8 w-fit px-3 rounded-md border border-[#1e2b45]/20 bg-white text-xs font-medium text-[#1e2b45] inline-flex items-center gap-1.5 hover:bg-[#1e2b45]/5 cursor-pointer">
+                <label className="mt-2 h-8 w-fit px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5 cursor-pointer">
                   <Upload className="w-3.5 h-3.5" />Update photo
                   <input type="file" accept="image/*" onChange={handlePhoto} className="sr-only" />
                 </label>
@@ -183,8 +197,8 @@ export default function ProfilePage() {
             </div>
 
             {form.photoReviewStatus === "pending" && (
-              <div className="rounded-md border border-[#c8975e]/30 bg-[#c8975e]/[0.06] px-3 py-2 flex items-start gap-2">
-                <Clock3 className="w-3.5 h-3.5 text-[#9a6a33] mt-0.5 flex-shrink-0" />
+              <div className="rounded-md border border-[#B17E6B]/30 bg-[#B17E6B]/[0.06] px-3 py-2 flex items-start gap-2">
+                <Clock3 className="w-3.5 h-3.5 text-[#8A5E50] mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-muted-foreground"><span className="font-medium text-foreground">Photo submitted for review.</span> Cambridge will approve it before it appears to other members.</p>
               </div>
             )}
@@ -249,10 +263,10 @@ export default function ProfilePage() {
                 <label
                   key={preference.value}
                   className={`flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-all ${
-                    form.contactPreference === preference.value ? "border-[#c8975e] bg-[#c8975e]/5" : "border-border hover:border-muted-foreground/30"
+                    form.contactPreference === preference.value ? "border-[#B17E6B] bg-[#B17E6B]/5" : "border-border hover:border-muted-foreground/30"
                   }`}
                 >
-                  <input type="radio" name="contact" value={preference.value} checked={form.contactPreference === preference.value} onChange={() => updateForm("contactPreference", preference.value)} className="mt-0.5 accent-[#c8975e]" />
+                  <input type="radio" name="contact" value={preference.value} checked={form.contactPreference === preference.value} onChange={() => updateForm("contactPreference", preference.value)} className="mt-0.5 accent-[#B17E6B]" />
                   <span>
                     <span className="block text-sm font-medium text-foreground">{preference.label}</span>
                     <span className="block text-xs text-muted-foreground mt-0.5">{preference.desc}</span>
@@ -267,8 +281,8 @@ export default function ProfilePage() {
             <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
               When enabled, members from other Cambridge forums can find you. When disabled, only people in your forum network can view your profile.
             </p>
-            <label className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${form.discoverable ? "border-[#c8975e] bg-[#c8975e]/5" : "border-border"}`}>
-              <input type="checkbox" checked={form.discoverable} onChange={event => updateForm("discoverable", event.target.checked)} className="accent-[#c8975e] w-4 h-4" />
+            <label className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${form.discoverable ? "border-[#B17E6B] bg-[#B17E6B]/5" : "border-border"}`}>
+              <input type="checkbox" checked={form.discoverable} onChange={event => updateForm("discoverable", event.target.checked)} className="accent-[#B17E6B] w-4 h-4" />
               <span>
                 <span className="block text-sm font-medium">Allow cross-forum discovery</span>
                 <span className="block text-xs text-muted-foreground">Other Cambridge members can find you even if you haven&apos;t shared a forum.</span>
@@ -283,11 +297,50 @@ export default function ProfilePage() {
             )}
           </div>
 
+          <div className="bg-white rounded-lg border border-border p-6">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#253855]/[0.07] text-[#253855] flex items-center justify-center flex-shrink-0"><BriefcaseBusiness className="w-4 h-4" /></div>
+              <div>
+                <h2 className="font-garamond text-base font-medium">Assistant Access</h2>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">Give your personal assistant their own restricted login to help manage your Forum arrangements.</p>
+              </div>
+            </div>
+
+            <label className={`mt-4 flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-all ${form.assistantEnabled ? "border-[#B17E6B] bg-[#B17E6B]/5" : "border-border"}`}>
+              <input type="checkbox" checked={form.assistantEnabled} onChange={event => updateForm("assistantEnabled", event.target.checked)} className="accent-[#B17E6B] w-4 h-4 mt-0.5" />
+              <span>
+                <span className="block text-sm font-medium">Allow my assistant to manage my Forum details</span>
+                <span className="block text-xs text-muted-foreground mt-0.5">You can remove this access at any time.</span>
+              </span>
+            </label>
+
+            {form.assistantEnabled && (
+              <div className="mt-4 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <ProfileField id="assistant-name" label="Assistant name"><Input id="assistant-name" value={form.assistantName} onChange={event => updateForm("assistantName", event.target.value)} placeholder="Full name" /></ProfileField>
+                  <ProfileField id="assistant-email" label="Assistant email"><Input id="assistant-email" type="email" value={form.assistantEmail} onChange={event => updateForm("assistantEmail", event.target.value)} placeholder="assistant@yourfirm.com" /></ProfileField>
+                </div>
+                <div className="rounded-md bg-[#253855]/[0.035] border border-[#253855]/10 p-3">
+                  <p className="text-xs font-medium flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-[#B17E6B]" />Restricted, delegated access</p>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">Your assistant can update your attendance, dietary, accessibility and travel details, and view your materials and logistics. They cannot access the Directory, Member Exchange, participant roster, or anyone else’s information.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { if (loginAsAssistant(member.id)) router.push("/assistant-dashboard"); }}
+                  className="h-9 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"
+                >
+                  Preview assistant view <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+
           <div id="notifications" className="bg-white rounded-lg border border-border p-6 scroll-mt-6">
             <h2 className="font-garamond text-base font-medium mb-1">Notification Settings</h2>
-            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">Member Exchange notifications are on by default. Choose which activity you want to hear about.</p>
+            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">Start with a quiet weekly summary, then opt in to individual Member Exchange alerts if they are useful.</p>
             <div className="divide-y divide-border">
               {([
+                { key: "notifyQaDigest", label: "Weekly Member Exchange digest", desc: "One weekly email summarising new discussions and activity. On by default." },
                 { key: "notifyQaNewPosts", label: "New Member Exchange discussions", desc: "New conversations shared with the Cambridge member community." },
                 { key: "notifyQaReplies", label: "Replies to my discussions", desc: "Responses to discussions or replies you have contributed." },
                 { key: "notifyQaMentions", label: "Mentions", desc: "Member Exchange messages in which another participant mentions you." },
@@ -301,7 +354,7 @@ export default function ProfilePage() {
                     type="checkbox"
                     checked={form[option.key]}
                     onChange={event => updateForm(option.key, event.target.checked)}
-                    className="accent-[#c8975e] w-4 h-4 mt-0.5 flex-shrink-0"
+                    className="accent-[#B17E6B] w-4 h-4 mt-0.5 flex-shrink-0"
                   />
                 </label>
               ))}
@@ -309,7 +362,7 @@ export default function ProfilePage() {
             <p className="text-[11px] text-muted-foreground mt-4">Prototype behaviour: preferences are saved in this browser. Production notifications can be delivered through the authenticated member service.</p>
           </div>
 
-          <div className="bg-[#1e2b45]/[0.035] border border-[#1e2b45]/10 rounded-lg p-4">
+          <div className="bg-[#253855]/[0.035] border border-[#253855]/10 rounded-lg p-4">
             <p className="text-xs text-muted-foreground leading-relaxed">
               Prototype behaviour: edits save in this browser after a short pause. The production app can send the same updates through the CRM API.
             </p>

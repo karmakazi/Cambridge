@@ -21,6 +21,12 @@ export type Member = {
   notifyQaNewPosts?: boolean;
   notifyQaReplies?: boolean;
   notifyQaMentions?: boolean;
+  notifyQaDigest?: boolean;
+  assistantAccess?: {
+    enabled: boolean;
+    name: string;
+    email: string;
+  };
   isCambridgeStaff?: boolean;
   avatar: string; // initials
   photo: string; // URL
@@ -51,6 +57,15 @@ export type Forum = {
   logistics: Logistics;
   representatives?: ForumRepresentative[];
   overview?: ForumOverview;
+  notices?: ForumNotice[];
+};
+
+export type ForumNotice = {
+  id: string;
+  title: string;
+  message: string;
+  publishedAt: string;
+  urgent?: boolean;
 };
 
 export type ForumOverview = {
@@ -165,12 +180,21 @@ export const MEMBERS: Member[] = [
     practiceArea: "Antitrust",
     expertise: ["Competition Law", "Merger Control", "State Aid", "Digital Markets"],
     bio: "Elena leads one of Italy's foremost competition practices, advising multinationals on EU merger filings and cartel investigations. Former legal advisor to the European Commission.",
-    forumsAttended: ["f001", "f004", "f007"],
+    forumsAttended: ["f001", "f004", "f007", "f010"],
     steeringCommitteeForums: ["f004"],
     coChairForums: ["f001"],
     contactEmail: "e.marchetti@marchetti-silveira.com",
     contactPreference: "email",
     discoverable: true,
+    notifyQaDigest: true,
+    notifyQaNewPosts: false,
+    notifyQaReplies: false,
+    notifyQaMentions: false,
+    assistantAccess: {
+      enabled: true,
+      name: "Sofia Rossi",
+      email: "s.rossi@marchetti-silveira.com",
+    },
     avatar: "EM",
     photo: "https://i.pravatar.cc/150?img=47",
   },
@@ -471,9 +495,10 @@ export const MEMBERS: Member[] = [
     contactEmail: "s.chen@cambridgeforums.com",
     contactPreference: "email",
     discoverable: false,
-    notifyQaNewPosts: true,
-    notifyQaReplies: true,
-    notifyQaMentions: true,
+    notifyQaDigest: true,
+    notifyQaNewPosts: false,
+    notifyQaReplies: false,
+    notifyQaMentions: false,
     isCambridgeStaff: true,
     avatar: "SC",
     photo: "",
@@ -535,6 +560,15 @@ export const FORUMS: Forum[] = [
       atmosphere: "The Forum is designed as time away from the demands of the office: informal, face-to-face conversation that develops into a collegial community of trusted peers.",
       principles: ["Peer selected", "Off the record", "Roundtable format", "Active participation"],
     },
+    notices: [
+      {
+        id: "notice-f001-room",
+        title: "Afternoon session room update",
+        message: "Today’s 15:30 session will now take place in the Estoril Room. Please allow a few extra minutes to make your way there.",
+        publishedAt: "Updated 20 minutes ago",
+        urgent: true,
+      },
+    ],
     agenda: [
       { date: "2026-10-14", time: "14:00", title: "Check-In", description: "Guest check-in opens at Lapa Palace.", kind: "logistics", venueName: "Lapa Palace" },
       { date: "2026-10-14", time: "15:30", endTime: "18:30", title: "Optional Private Tour of Belém", description: "Meet in the hotel lobby for departure. Participation is optional.", kind: "social", optional: true, venueName: "Meet in hotel lobby" },
@@ -845,6 +879,7 @@ export const FORUM_EDITION_HISTORY: ForumEditionSummary[] = [
   { id: "f007", programId: "competition-europe", title: "Annual European Competition Forum", year: 2024, location: "Paris, France" },
   { id: "f008", programId: "family-office-private-wealth", title: "Family Office & Private Wealth Forum", year: 2024, location: "London, United Kingdom" },
   { id: "f009", programId: "private-capital-markets", title: "Private Capital Markets Forum", year: 2024, location: "New York, USA" },
+  { id: "f010", programId: "competition-europe", title: "Annual European Competition Forum", year: 2021, location: "Virtual Forum" },
 ];
 
 export function getForumEditionSummary(id: string): ForumEditionSummary | undefined {

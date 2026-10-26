@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -8,8 +8,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
-  --font-serif: var(--font-garamond), 'EB Garamond', Georgia, serif;
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-serif: 'Novar', 'Montserrat', Arial, sans-serif;
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -38,10 +38,10 @@
   --radius-xl: calc(var(--radius) * 1.4);
 
   /* Cambridge brand */
-  --color-cambridge-navy: #1e2b45;
-  --color-cambridge-navy-light: #243253;
-  --color-cambridge-gold: #c8975e;
-  --color-cambridge-gold-light: #d4aa7a;
+  --color-cambridge-navy: #253855;
+  --color-cambridge-navy-light: #2f4566;
+  --color-cambridge-gold: #B17E6B;
+  --color-cambridge-gold-light: #C79786;
   --color-cambridge-cream: #f5f0e8;
 }
 
@@ -52,26 +52,26 @@
   --card-foreground: #1a1a1a;
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
-  --primary: #1e2b45;
+  --primary: #253855;
   --primary-foreground: #f5f0e8;
   --secondary: #f0ece6;
-  --secondary-foreground: #1e2b45;
+  --secondary-foreground: #253855;
   --muted: #f0ece6;
   --muted-foreground: #6b6357;
-  --accent: #c8975e;
+  --accent: #B17E6B;
   --accent-foreground: #ffffff;
   --border: #e2ddd7;
   --input: #e2ddd7;
-  --ring: #c8975e;
+  --ring: #B17E6B;
   --radius: 0.375rem;
-  --sidebar: #1e2b45;
+  --sidebar: #253855;
   --sidebar-foreground: #f5f0e8;
-  --sidebar-primary: #c8975e;
+  --sidebar-primary: #B17E6B;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #243253;
+  --sidebar-accent: #2f4566;
   --sidebar-accent-foreground: #f5f0e8;
   --sidebar-border: rgba(255,255,255,0.08);
-  --sidebar-ring: #c8975e;
+  --sidebar-ring: #B17E6B;
 }
 
 @layer base {
@@ -80,22 +80,23 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-family: Arial, Helvetica, sans-serif;
   }
   h1, h2, h3 {
-    font-family: 'EB Garamond', Georgia, serif;
-    letter-spacing: -0.01em;
+    font-family: 'Novar', 'Montserrat', Arial, sans-serif;
+    letter-spacing: -0.025em;
   }
 }
 
 /* Cambridge utility classes */
 .font-garamond {
-  font-family: 'EB Garamond', Georgia, serif;
+  font-family: 'Novar', 'Montserrat', Arial, sans-serif;
 }
 .text-gold {
-  color: #c8975e;
+  color: #B17E6B;
 }
 .bg-navy {
-  background-color: #1e2b45;
+  background-color: #253855;
 }
 .text-cream {
   color: #f5f0e8;

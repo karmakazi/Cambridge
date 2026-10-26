@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { setPendingEmail } from "@/lib/auth";
 
+const EMAIL_CHANGE_REQUEST = `mailto:webhelp@cambridgeforums.com?subject=${encodeURIComponent("Email change request – Cambridge Forums member account")}&body=${encodeURIComponent("Hello Cambridge team,\n\nI have changed firms or no longer have access to the email address on my Cambridge Forums account. Please help me verify my identity and update my email.\n\nFull name:\nFormer email address:\nNew email address:\nFormer firm:\nCurrent firm:\nMost recent Cambridge Forum attended:\n\nThank you.")}`;
+
 export default function AccountHelpPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,10 +42,10 @@ export default function AccountHelpPage() {
       <main className="flex-1 flex items-center justify-center px-4 pb-16">
         <div className="w-full max-w-md">
           <Link href="/" className="inline-flex items-center gap-1.5 text-white/50 hover:text-cream text-xs mb-4"><ArrowLeft className="w-3.5 h-3.5" />Back to sign in</Link>
-          <div className="bg-[#243253] rounded-lg p-6 sm:p-8 border border-white/10">
+          <div className="bg-[#2f4566] rounded-lg p-6 sm:p-8 border border-white/10">
             {!sent ? (
               <>
-                <div className="w-10 h-10 rounded-full bg-[#c8975e]/15 flex items-center justify-center mb-5"><LifeBuoy className="w-5 h-5 text-gold" /></div>
+                <div className="w-10 h-10 rounded-full bg-[#B17E6B]/15 flex items-center justify-center mb-5"><LifeBuoy className="w-5 h-5 text-gold" /></div>
                 <h1 className="font-garamond text-cream text-3xl font-medium">Trouble signing in?</h1>
                 <p className="text-white/50 text-sm leading-relaxed mt-2">Request a fresh sign-in link if your previous link expired, you forgot your password, or your account is locked.</p>
 
@@ -53,17 +55,18 @@ export default function AccountHelpPage() {
                     <Input id="recovery-email" type="email" value={email} onChange={event => { setEmail(event.target.value); setError(""); }} placeholder="you@yourfirm.com" autoComplete="email" className="bg-white/5 border-white/15 text-cream placeholder:text-white/25 focus:border-gold focus-visible:ring-0 focus-visible:ring-offset-0" />
                   </div>
                   {error && <p className="text-red-400 text-xs">{error}</p>}
-                  <Button type="submit" disabled={loading} className="w-full bg-[#c8975e] hover:bg-[#d4aa7a] text-white font-medium"><Mail className="mr-2 w-4 h-4" />{loading ? "Sending…" : "Send a new sign-in link"}</Button>
+                  <Button type="submit" disabled={loading} className="w-full bg-[#B17E6B] hover:bg-[#C79786] text-white font-medium"><Mail className="mr-2 w-4 h-4" />{loading ? "Sending…" : "Send a new sign-in link"}</Button>
                 </form>
 
                 <div className="border-t border-white/10 mt-6 pt-5">
-                  <p className="text-white/50 text-xs leading-relaxed">Still unable to access your account?</p>
-                  <a href="mailto:webhelp@cambridgeforums.com?subject=Member platform account access" className="text-gold text-xs hover:underline">Contact Cambridge support</a>
+                  <p className="text-cream text-sm font-medium">Changed firms or lost access to your email?</p>
+                  <p className="mt-1 text-white/50 text-xs leading-relaxed">Cambridge can verify your identity and update the email address on your member record.</p>
+                  <a href={EMAIL_CHANGE_REQUEST} className="mt-2 inline-flex text-gold text-xs font-medium hover:underline">Request an email change</a>
                 </div>
               </>
             ) : (
               <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-[#c8975e]/15 flex items-center justify-center mx-auto"><CheckCircle2 className="w-6 h-6 text-gold" /></div>
+                <div className="w-12 h-12 rounded-full bg-[#B17E6B]/15 flex items-center justify-center mx-auto"><CheckCircle2 className="w-6 h-6 text-gold" /></div>
                 <h1 className="font-garamond text-cream text-2xl font-medium mt-5">Check your inbox</h1>
                 <p className="text-white/50 text-sm leading-relaxed mt-2">If an account matches <span className="text-cream">{email}</span>, Cambridge will send a fresh sign-in link. It will expire after 15 minutes.</p>
                 <div className="border-t border-white/10 mt-6 pt-5 space-y-3">
