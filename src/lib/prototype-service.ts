@@ -223,6 +223,15 @@ export function getMemberTenure(member: Member): { count: number; firstYear: num
   };
 }
 
+export function getMemberAnniversaryMilestone(member: Member): number | null {
+  const { firstYear } = getMemberTenure(member);
+  if (!firstYear) return null;
+  const years = new Date().getFullYear() - firstYear;
+  if (years >= 10) return 10;
+  if (years >= 5) return 5;
+  return null;
+}
+
 function compactUtc(date: string, time: string): string {
   return `${date.replaceAll("-", "")}T${time.replace(":", "")}00`;
 }

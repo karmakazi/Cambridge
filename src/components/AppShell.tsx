@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getAuth, clearAuth } from "@/lib/auth";
 import { getResolvedMember } from "@/lib/store";
 import type { Member } from "@/lib/data";
+import BrandLogo from "@/components/BrandLogo";
 import { LayoutDashboard, MessageCircle, Users, UserCircle, LogOut, Menu, X } from "lucide-react";
 
 const NAV = [
@@ -19,10 +20,7 @@ function SidebarContent({ member, pathname, onNavigate, onSignOut }: { member: M
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 py-6 border-b border-white/8">
-        <div className="flex flex-col">
-          <span className="font-garamond text-cream text-xl font-medium tracking-wide">Cambridge</span>
-          <span className="label-caps text-gold" style={{ marginTop: -2, fontSize: "0.6rem" }}>Forums · Members</span>
-        </div>
+        <BrandLogo className="w-36" />
       </div>
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {NAV.map(({ href, label, icon: Icon }) => {
@@ -78,10 +76,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-navy border-b border-white/10 flex items-center justify-between px-4 py-3">
-        <div className="flex flex-col">
-          <span className="font-garamond text-cream text-base font-medium tracking-wide">Cambridge</span>
-          <span className="label-caps text-gold" style={{ marginTop: -2, fontSize: "0.55rem" }}>Forums · Members</span>
-        </div>
+        <BrandLogo className="w-32" />
         <button onClick={() => setMobileOpen(!mobileOpen)} className="text-white/60 hover:text-cream">
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>

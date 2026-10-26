@@ -8,7 +8,7 @@ import { getAuth } from "@/lib/auth";
 import { getResolvedMember } from "@/lib/store";
 import { FORUMS, getForumEditionSummary } from "@/lib/data";
 import type { Member, Forum } from "@/lib/data";
-import { getForumHistory, getMemberTenure } from "@/lib/prototype-service";
+import { getForumHistory, getMemberAnniversaryMilestone, getMemberTenure } from "@/lib/prototype-service";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Award, Mail, Globe, MapPin, Phone, Building2, Users, ExternalLink } from "lucide-react";
 
@@ -51,8 +51,7 @@ export default function MemberProfilePage() {
   const tenure = getMemberTenure(member);
   const forumHistory = getForumHistory(member);
   const displayName = member.publishedName || member.name;
-  const yearsWithCambridge = tenure.firstYear ? new Date().getFullYear() - tenure.firstYear : 0;
-  const milestoneYears = yearsWithCambridge >= 10 ? 10 : yearsWithCambridge >= 5 ? 5 : null;
+  const milestoneYears = getMemberAnniversaryMilestone(member);
 
   return (
     <AppShell>
@@ -90,8 +89,8 @@ export default function MemberProfilePage() {
                     </Badge>
                   )}
                   {milestoneYears && (
-                    <Badge className="bg-[#B17E6B]/10 text-[#7A5144] border border-[#B17E6B]/25 text-[10px] font-medium gap-1">
-                      <Award className="w-3 h-3" />{milestoneYears} years with Cambridge
+                    <Badge className="bg-[#B17E6B] text-white border-0 text-[10px] font-medium gap-1 shadow-sm">
+                      <Award className="w-3 h-3" />{milestoneYears}-year anniversary attendee
                     </Badge>
                   )}
                   {isOwnProfile && (
@@ -111,11 +110,11 @@ export default function MemberProfilePage() {
             </div>
           </div>
           {milestoneYears && tenure.firstYear && (
-            <div className="mt-5 rounded-md border border-[#B17E6B]/25 bg-[#B17E6B]/[0.06] px-3 py-2.5 flex items-start gap-2.5">
-              <Award className="w-4 h-4 text-[#B17E6B] mt-0.5 flex-shrink-0" />
+            <div className="mt-5 rounded-md border-l-4 border-[#B17E6B] bg-[#B17E6B]/10 px-4 py-3 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-[#B17E6B] text-white flex items-center justify-center flex-shrink-0"><Award className="w-4 h-4" /></div>
               <div>
-                <p className="text-xs font-medium text-foreground">Recognising {milestoneYears} years in the Cambridge community</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">First attended in {tenure.firstYear}; attendance does not need to be consecutive.</p>
+                <p className="text-sm font-medium text-foreground">Celebrating {displayName}’s {milestoneYears}-year anniversary</p>
+                <p className="text-xs text-muted-foreground mt-0.5">A Cambridge Forums attendee since {tenure.firstYear}. Attendance does not need to be consecutive.</p>
               </div>
             </div>
           )}

@@ -15,6 +15,7 @@ import {
   type TravelDetails,
 } from "@/lib/prototype-service";
 import { Badge } from "@/components/ui/badge";
+import BrandLogo from "@/components/BrandLogo";
 import { ArrowLeft, BriefcaseBusiness, Calendar, CheckCircle2, Eye, FileText, LogOut, MapPin, ShieldCheck } from "lucide-react";
 
 const RSVP_OPTIONS: Array<{ value: RsvpStatus; label: string }> = [
@@ -61,8 +62,8 @@ export default function AssistantDashboardPage() {
       <header className="bg-[#253855] text-cream">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
           <div>
-            <p className="font-garamond text-lg font-medium tracking-wide">Cambridge</p>
-            <p className="label-caps text-[#B17E6B] -mt-0.5">Forums · Assistant Access</p>
+            <BrandLogo className="w-36" />
+            <p className="label-caps text-white/55 mt-1">Assistant Access</p>
           </div>
           <div className="flex items-center gap-3">
             {isPreview && <button type="button" onClick={exitPreview} className="text-xs text-cream hover:text-white flex items-center gap-1.5"><ArrowLeft className="w-3.5 h-3.5" />Exit assistant preview</button>}

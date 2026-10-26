@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { loginWithMagicLink } from "@/lib/auth";
+import BrandLogo from "@/components/BrandLogo";
 
 function MagicLinkHandler() {
   const router = useRouter();
@@ -27,8 +28,7 @@ function MagicLinkHandler() {
       <div className="flex flex-col items-center gap-4">
         {/* Animated logo */}
         <div className="flex flex-col items-center mb-4">
-          <span className="font-garamond text-cream text-3xl font-medium tracking-wide">Cambridge</span>
-          <span className="label-caps text-gold">Forums</span>
+          <BrandLogo className="w-52" />
         </div>
 
         {status === "verifying" && (

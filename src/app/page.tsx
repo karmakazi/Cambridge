@@ -7,6 +7,7 @@ import { getAuth, setPendingEmail, loginAsAssistant, loginWithPassword } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, BriefcaseBusiness, Mail, Lock } from "lucide-react";
+import BrandLogo from "@/components/BrandLogo";
 
 const EMAIL_CHANGE_REQUEST = `mailto:webhelp@cambridgeforums.com?subject=${encodeURIComponent("Email change request – Cambridge Forums member account")}&body=${encodeURIComponent("Hello Cambridge team,\n\nI have changed firms or no longer have access to the email address on my Cambridge Forums account. Please help me verify my identity and update my email.\n\nFull name:\nFormer email address:\nNew email address:\nFormer firm:\nCurrent firm:\nMost recent Cambridge Forum attended:\n\nThank you.")}`;
 
@@ -53,10 +54,7 @@ export default function LoginPage() {
 
       {/* Logo */}
       <header className="relative z-10 flex items-center justify-between px-8 py-6">
-        <div className="flex flex-col">
-          <span className="font-garamond text-cream text-2xl font-medium tracking-wide">Cambridge</span>
-          <span className="label-caps text-gold" style={{ marginTop: -2 }}>Forums</span>
-        </div>
+        <BrandLogo className="w-44" />
       </header>
 
       {/* Main */}

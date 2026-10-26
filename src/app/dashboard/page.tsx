@@ -12,6 +12,7 @@ import {
   formatForumDateRange,
   getCalendarFileUrl,
   getForumParticipation,
+  getMemberAnniversaryMilestone,
   getMemberTenure,
   getSteeringCommitteeNotes,
   getTravelDetails,
@@ -754,11 +755,12 @@ function ParticipantList({ forum }: { forum: Forum }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {participants.map(participant => {
           const tenure = getMemberTenure(participant);
+          const milestoneYears = getMemberAnniversaryMilestone(participant);
           const isCoChair = participant.coChairForums?.includes(forum.id);
           const isSteeringCommittee = participant.steeringCommitteeForums.includes(forum.id);
           const displayName = participant.publishedName || participant.name;
           return (
-            <article key={participant.id} className="rounded-lg border border-border bg-white p-4 hover:border-[#B17E6B]/50 transition-colors">
+            <article key={participant.id} className={`rounded-lg border bg-white p-4 transition-colors ${milestoneYears ? "border-[#B17E6B]/60 bg-[#B17E6B]/[0.045] shadow-sm" : "border-border hover:border-[#B17E6B]/50"}`}>
               <div className="flex items-start gap-3">
                 <Link href={`/directory/${participant.id}`} aria-label={`View ${displayName}'s profile`} className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-[#253855]/10">
                   {participant.photo ? (
@@ -773,6 +775,7 @@ function ParticipantList({ forum }: { forum: Forum }) {
                     <div className="flex flex-wrap justify-end gap-1">
                       {isCoChair && <Badge className="bg-[#253855] text-cream border-0 text-[9px] h-4">Committee Co-Chair</Badge>}
                       {isSteeringCommittee && <Badge className="bg-[#B17E6B]/12 text-[#8A5E50] border-0 text-[9px] h-4">Steering Committee</Badge>}
+                      {milestoneYears && <Badge className="bg-[#B17E6B] text-white border-0 text-[9px] h-4 gap-1"><Award className="w-2.5 h-2.5" />{milestoneYears}-year anniversary attendee</Badge>}
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">{participant.title}</p>

@@ -9,12 +9,13 @@ import type { Forum, Member } from "@/lib/data";
 import {
   getDirectoryForums,
   getDirectoryMembers,
+  getMemberAnniversaryMilestone,
   getMemberTenure,
   type DirectoryScope,
 } from "@/lib/prototype-service";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Globe, Mail, Phone, Search, X } from "lucide-react";
+import { Award, Globe, Mail, Phone, Search, X } from "lucide-react";
 
 const PRACTICE_AREAS = [
   "Antitrust", "Compliance & Corporate Governance", "Corporate Law & Finance",
@@ -123,7 +124,7 @@ export default function DirectoryPage() {
               aria-label="Filter by forum"
               value={forumId}
               onChange={event => setForumId(event.target.value)}
-              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#B17E6B]"
+              className="h-9 w-full sm:w-auto min-w-0 max-w-full px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#B17E6B]"
             >
               <option value="">All my forums</option>
               {forums.map(forum => <option key={forum.id} value={forum.id}>{forum.title}</option>)}
@@ -133,7 +134,7 @@ export default function DirectoryPage() {
               aria-label="Filter by practice area"
               value={practice}
               onChange={event => setPractice(event.target.value)}
-              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#B17E6B]"
+              className="h-9 w-full sm:w-auto min-w-0 max-w-full px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#B17E6B]"
             >
               <option value="">All Practice Areas</option>
               {PRACTICE_AREAS.map(value => <option key={value} value={value}>{value}</option>)}
@@ -143,7 +144,7 @@ export default function DirectoryPage() {
               aria-label="Filter by jurisdiction"
               value={jurisdiction}
               onChange={event => setJurisdiction(event.target.value)}
-              className="h-9 px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#B17E6B]"
+              className="h-9 w-full sm:w-auto min-w-0 max-w-full px-3 text-sm rounded-md border border-border bg-white text-foreground focus:outline-none focus:border-[#B17E6B]"
             >
               <option value="">All Jurisdictions</option>
               {JURISDICTIONS.map(value => <option key={value} value={value}>{value}</option>)}
@@ -180,9 +181,10 @@ export default function DirectoryPage() {
 
 function MemberCard({ member }: { member: Member }) {
   const tenure = getMemberTenure(member);
+  const milestoneYears = getMemberAnniversaryMilestone(member);
   const displayName = member.publishedName || member.name;
   return (
-    <article className="bg-white rounded-lg border border-border p-4 hover:border-[#B17E6B]/50 hover:bg-[#B17E6B]/[0.02] transition-all group">
+    <article className={`bg-white rounded-lg border p-4 transition-all group ${milestoneYears ? "border-[#B17E6B]/60 bg-[#B17E6B]/[0.045] shadow-sm hover:border-[#B17E6B]" : "border-border hover:border-[#B17E6B]/50 hover:bg-[#B17E6B]/[0.02]"}`}>
       <div className="flex items-start gap-3">
         <Link href={`/directory/${member.id}`} aria-label={`View ${displayName}'s profile`} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[#253855]/10">
           {member.photo ? (
@@ -195,6 +197,7 @@ function MemberCard({ member }: { member: Member }) {
           <div className="flex items-start justify-between gap-2">
             <Link href={`/directory/${member.id}`} className="font-medium text-sm text-foreground group-hover:text-[#8A5E50] transition-colors leading-tight hover:underline">{displayName}</Link>
             <div className="flex items-center gap-1 flex-shrink-0">
+              {milestoneYears && <Badge className="bg-[#B17E6B] text-white text-[9px] px-1.5 h-4 border-0 font-medium gap-1"><Award className="w-2.5 h-2.5" />{milestoneYears}-year anniversary</Badge>}
               {tenure.count > 0 && <Badge className="bg-[#253855]/[0.07] text-[#253855] text-[9px] px-1.5 h-4 border-0 font-medium">{tenure.count} Forum{tenure.count === 1 ? "" : "s"}</Badge>}
             </div>
           </div>
