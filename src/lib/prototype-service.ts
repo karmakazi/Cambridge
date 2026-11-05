@@ -12,7 +12,7 @@ import {
 import { getAllResolvedMembers, saveProfile } from "./store";
 
 export type RsvpStatus = "pending" | "attending" | "maybe" | "declined";
-export type DirectoryScope = "network" | "all";
+export type DirectoryScope = "network" | "all" | "team";
 
 export type ForumParticipation = {
   status: RsvpStatus;
@@ -125,7 +125,11 @@ export function getDirectoryMembers(
   scope: DirectoryScope,
   forumId = "",
 ): Member[] {
-  const allMembers = getAllResolvedMembers().filter(member => !member.isCambridgeStaff);
+  const resolvedMembers = getAllResolvedMembers();
+  if (scope === "team") {
+    return resolvedMembers.filter(member => member.isCambridgeStaff).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  const allMembers = resolvedMembers.filter(member => !member.isCambridgeStaff);
   const currentMember = allMembers.find(member => member.id === currentMemberId);
   const currentProgramIds = new Set(
     (currentMember?.forumsAttended ?? [])

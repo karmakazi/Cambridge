@@ -27,9 +27,10 @@ import {
   type TravelDetails,
 } from "@/lib/prototype-service";
 import { Badge } from "@/components/ui/badge";
+import { getSavedMaterialIds, toggleSavedMaterial } from "@/lib/saved-items";
 import {
-  Award, BedDouble, Calendar, CalendarPlus, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Download,
-  ExternalLink, Eye, FileText, Globe, Loader2, Mail, MapPin, Megaphone, MessageSquare, Phone, Plane, Send, ShieldCheck, UserRound, Users, X, XCircle,
+  Award, BedDouble, Bookmark, Calendar, CalendarPlus, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Download,
+  ExternalLink, Eye, FileText, Globe, Loader2, Mail, MapPin, Megaphone, MessageSquare, Phone, Plane, Printer, Search, Send, ShieldCheck, UserRound, Users, X, XCircle,
 } from "lucide-react";
 
 const RSVP_OPTIONS: Array<{ value: RsvpStatus; label: string }> = [
@@ -42,16 +43,20 @@ const RSVP_LABELS: Record<RsvpStatus, string> = {
   pending: "Response requested",
   attending: "Attending",
   maybe: "Maybe",
-  declined: "Not attending",
+  declined: "Unable to attend",
 };
 
 // Keep the prototype implementation available for a later review round without
 // exposing the Steering Committee workspace in the current client build.
 const SHOW_STEERING_COMMITTEE_WORKSPACE = false;
 
-function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
+function forumDisplayTitle(title: string): string {
+  return title.replace(/^Cambridge Forum on /, "");
+}
+
+function ForumCard({ forum, member, defaultOpen = false }: { forum: Forum; member: Member; defaultOpen?: boolean }) {
   const memberId = member.id;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [participation, setParticipation] = useState<ForumParticipation>(() => getForumParticipation(forum, memberId));
   const [selectedStatus, setSelectedStatus] = useState<RsvpStatus>(participation.status);
   const [comment, setComment] = useState(participation.comment);
@@ -60,8 +65,14 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
   const [unseenCount, setUnseenCount] = useState(() => getUnseenMaterialCount(memberId, forum));
   const [dismissedNotices, setDismissedNotices] = useState<string[]>([]);
   const isUpcoming = forum.status === "upcoming";
-  const director = getForumDirectorByEmail(forum.logistics.contactEmail);
   const activeNotices = (forum.notices ?? []).filter(notice => !dismissedNotices.includes(notice.id));
+
+  useEffect(() => {
+    if (window.location.hash === `#forum-${forum.id}`) {
+      queueMicrotask(() => setOpen(true));
+      requestAnimationFrame(() => document.getElementById(`forum-${forum.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
+  }, [forum.id]);
 
   async function handleRsvp() {
     setSaving(true);
@@ -69,81 +80,29 @@ function ForumCard({ forum, member }: { forum: Forum; member: Member }) {
     await submitRsvp(forum.id, memberId, selectedStatus, comment);
     setParticipation(getForumParticipation(forum, memberId));
     setSaving(false);
-    setConfirmation("Response saved. Your Cambridge coordinator has been notified.");
+    setConfirmation("Your interest has been noted and you will hear back from your Cambridge coordinator within 48 hours.");
   }
 
   return (
-    <div className="bg-white rounded-lg border border-border overflow-hidden">
-      <div className="px-4 sm:px-6 py-4 flex items-start justify-between gap-3 hover:bg-muted/30 transition-colors">
-        <div className="min-w-0 flex-1">
-          <button type="button" className="block w-full text-left" onClick={() => setOpen(value => !value)} aria-expanded={open}>
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="label-caps text-gold">{forum.area}</span>
-              <Badge className={isUpcoming
-                ? "bg-[#253855] text-cream text-[10px] h-4 px-1.5 rounded"
-                : "bg-muted text-muted-foreground text-[10px] h-4 px-1.5 rounded"
-              }>
-                {isUpcoming ? "Upcoming" : "Past"}
-              </Badge>
-              {isUpcoming && (
-                <Badge className="bg-[#B17E6B]/10 text-[#8A5E50] text-[10px] h-4 px-1.5 rounded border-0">
-                  {RSVP_LABELS[participation.status]}
-                </Badge>
-              )}
-              {unseenCount > 0 && participation.canAccessResources && (
-                <Badge className="bg-[#8A5E50] text-white text-[10px] h-4 px-1.5 rounded border-0">
-                  {unseenCount} new {unseenCount === 1 ? "document" : "documents"}
-                </Badge>
-              )}
-              {activeNotices.length > 0 && (
-                <Badge className="bg-[#B17E6B] text-white text-[10px] h-4 px-1.5 rounded border-0 gap-1">
-                  <Megaphone className="w-2.5 h-2.5" />Event update
-                </Badge>
-              )}
-            </div>
-            <h3 className="font-garamond text-lg font-medium text-foreground leading-tight">{forum.title}</h3>
-          </button>
-          <div className="flex items-center gap-x-4 gap-y-1 mt-1.5 text-muted-foreground text-xs flex-wrap">
-            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatForumDateRange(forum)} · {forum.startTime}–{forum.endTime}</span>
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(forum.logistics.hotelAddress)}`}
-              target="_blank"
-              rel="noreferrer"
-              title={`Open ${forum.logistics.hotel} in Google Maps`}
-              aria-label={`Open ${forum.logistics.hotel} in Google Maps`}
-              className="flex items-center gap-1 hover:text-[#8A5E50] hover:underline transition-colors"
-            >
-              <MapPin className="w-3.5 h-3.5" />{forum.logistics.hotel} · {forum.location}
-            </a>
-          </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            Forum Director:{" "}
-            {director ? (
-              <Link href={`/directors/${director.id}`} className="font-medium text-[#7A5144] hover:underline">{director.name}</Link>
-            ) : (
-              <a href={`mailto:${forum.logistics.contactEmail}`} className="font-medium text-[#7A5144] hover:underline">{forum.logistics.contactName}</a>
-            )}
-          </p>
-          {isUpcoming && (
-            <a
-              href={getCalendarFileUrl(forum)}
-              download={`${forum.title}-${forum.editionYear}.ics`}
-              className="mt-2 h-8 w-fit px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"
-            >
-              <Download className="w-3.5 h-3.5" />Download Calendar
-            </a>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => setOpen(value => !value)}
-          aria-expanded={open}
-          aria-label={`${open ? "Collapse" : "Expand"} ${forum.title}`}
-          className="p-1 -mr-1 rounded hover:bg-muted"
-        >
-          <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`} />
-        </button>
-      </div>
+    <div id={`forum-${forum.id}`} className="scroll-mt-5 bg-white rounded-lg border border-border overflow-hidden">
+      <button type="button" className="group block w-full px-4 sm:px-6 py-5 text-left hover:bg-muted/30 transition-colors" onClick={() => setOpen(value => !value)} aria-expanded={open}>
+        <span className="flex items-start justify-between gap-4">
+          <span className="min-w-0 flex-1">
+            <span className="font-garamond text-xl sm:text-2xl font-medium text-[#253855] leading-tight underline decoration-transparent underline-offset-4 group-hover:decoration-[#B17E6B]">{forumDisplayTitle(forum.title)}</span>
+            <span className="mt-2 flex items-center gap-x-5 gap-y-1 text-muted-foreground text-sm flex-wrap">
+              <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />{formatForumDateRange(forum)}</span>
+              <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{forum.logistics.hotel} · {forum.location}</span>
+            </span>
+            <span className="mt-3 flex flex-wrap items-center gap-3 text-xs">
+              {isUpcoming && <span className="font-medium text-[#253855]">Your response: {RSVP_LABELS[participation.status]}</span>}
+              {activeNotices.length > 0 && <span className="inline-flex items-center gap-1 font-medium text-[#8A5E50]"><Megaphone className="w-3.5 h-3.5" />Event update</span>}
+            </span>
+          </span>
+          <span className="flex-shrink-0 rounded-full border border-border p-2 group-hover:border-[#B17E6B]/50">
+            <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`} />
+          </span>
+        </span>
+      </button>
 
       {open && (
         <div className="border-t border-border">
@@ -247,16 +206,20 @@ function ForumDetail({
   unseenCount: number;
   onMaterialSeen: () => void;
 }) {
-  const [tab, setTab] = useState<ForumTab>(forum.overview ? "overview" : "agenda");
+  const [tab, setTab] = useState<ForumTab>(forum.status === "past" ? "materials" : forum.overview ? "overview" : "agenda");
   const agendaDates = Array.from(new Set(forum.agenda.map(item => item.date).filter((date): date is string => Boolean(date))));
   const [agendaDate, setAgendaDate] = useState(agendaDates[0] ?? "");
   const director = getForumDirectorByEmail(forum.logistics.contactEmail);
+  useEffect(() => {
+    const requestedTab = window.location.hash.replace(`#forum-${forum.id}-`, "") as ForumTab;
+    if (["overview", "agenda", "materials", "participants", "logistics"].includes(requestedTab)) queueMicrotask(() => setTab(requestedTab));
+  }, [forum.id]);
   const tabs = [
     { id: "overview" as const, label: "Forum overview", show: Boolean(forum.overview) },
-    { id: "agenda" as const, label: "Agenda", show: forum.agenda.length > 0 },
-    { id: "materials" as const, label: unseenCount ? `Materials (${unseenCount})` : "Materials", show: forum.materials.length > 0 },
-    { id: "participants" as const, label: "Participants", show: true },
-    { id: "logistics" as const, label: "Logistics", show: true },
+    { id: "agenda" as const, label: forum.updateCounts?.agenda ? `Agenda (${forum.updateCounts.agenda} update)` : "Agenda", show: forum.agenda.length > 0 },
+    { id: "materials" as const, label: unseenCount ? `Materials (${unseenCount} new)` : "Materials", show: forum.materials.length > 0 },
+    { id: "participants" as const, label: forum.updateCounts?.participants ? `Participants (${forum.updateCounts.participants} new)` : "Participants", show: true },
+    { id: "logistics" as const, label: "Logistics", show: forum.status === "upcoming" },
     {
       id: "steering" as const,
       label: "SC Workspace",
@@ -268,37 +231,20 @@ function ForumDetail({
 
   return (
     <div>
-      <div className="mx-4 sm:mx-6 mt-5 rounded-lg border border-[#B17E6B]/30 bg-[#B17E6B]/[0.06] p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#253855] text-cream flex items-center justify-center flex-shrink-0"><UserRound className="w-4 h-4" /></div>
-          <div className="min-w-0">
-            <p className="label-caps text-[#8A5E50]">Your Forum Director</p>
-            {director ? (
-              <Link href={`/directors/${director.id}`} className="text-sm font-medium hover:text-[#8A5E50] hover:underline">{director.name}</Link>
-            ) : (
-              <p className="text-sm font-medium">{forum.logistics.contactName}</p>
-            )}
-            <p className="text-xs text-muted-foreground">Questions about attendance, travel, or materials</p>
-          </div>
-        </div>
-        <div className="flex gap-2 flex-wrap min-w-0">
-          {director && <Link href={`/directors/${director.id}`} className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"><UserRound className="w-3.5 h-3.5" />View profile</Link>}
-          <a href={`mailto:${forum.logistics.contactEmail}`} className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"><Mail className="w-3.5 h-3.5" />Email</a>
-          <a
-            href={`mailto:${forum.logistics.contactEmail}?subject=${encodeURIComponent(`Meeting request: ${forum.title}`)}&body=${encodeURIComponent(`Hello ${forum.logistics.contactName},\n\nI would like to arrange a meeting regarding ${forum.title}.\n\nThank you.`)}`}
-            title="Email the Forum Director to request a meeting"
-            className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"
-          ><CalendarPlus className="w-3.5 h-3.5" />Request a meeting</a>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-5 sm:px-6">
+        {forum.status === "upcoming" ? (
+          <a href={getCalendarFileUrl(forum)} download={`${forumDisplayTitle(forum.title)}-${forum.editionYear}.ics`} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[#253855]/20 bg-white px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5"><CalendarPlus className="h-3.5 w-3.5" />Download Calendar</a>
+        ) : <span />}
+        <a href="/materials/prototype-complete-forum-pack.txt" download={`${forumDisplayTitle(forum.title)}-${forum.editionYear}-forum-pack.txt`} className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-md bg-[#253855] px-3 text-xs font-medium text-white hover:bg-[#31496f]"><Download className="h-3.5 w-3.5" />Download Forum Pack</a>
       </div>
-      <div className="flex max-w-full border-b border-border px-4 sm:px-6 overflow-x-auto overscroll-x-contain">
+      <div className="flex max-w-full gap-2 border-b border-border px-4 sm:px-6 pt-5 overflow-x-auto overscroll-x-contain">
         {tabs.map(item => (
           <button
             type="button"
             key={item.id}
-            onClick={() => setTab(item.id)}
-            className={`py-3 mr-5 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
-              tab === item.id ? "border-[#B17E6B] text-[#253855]" : "border-transparent text-muted-foreground hover:text-foreground"
+            onClick={() => { setTab(item.id); history.replaceState(null, "", `#forum-${forum.id}-${item.id}`); }}
+            className={`rounded-t-md border border-b-0 px-3 py-2.5 text-sm font-medium transition-colors whitespace-nowrap ${
+              tab === item.id ? "border-border bg-[#253855] text-white" : "border-transparent bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
           >{item.label}</button>
         ))}
@@ -328,6 +274,10 @@ function ForumDetail({
 
         {tab === "agenda" && (
           <div>
+            <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+              <a href="/materials/prototype-agenda.txt" download className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#253855]/20 px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5"><Download className="h-3.5 w-3.5" />Download agenda</a>
+              <button type="button" onClick={() => window.print()} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#253855]/20 px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5"><Printer className="h-3.5 w-3.5" />Print</button>
+            </div>
             {agendaDates.length > 1 && (
               <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted/70 p-1 mb-5" aria-label="Agenda days">
                 {agendaDates.map((date, index) => (
@@ -378,7 +328,8 @@ function ForumDetail({
 
         {tab === "materials" && (
           <div>
-            <div className="flex justify-end mb-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <p className="text-[11px] text-muted-foreground">Subscription articles are linked separately and are not included in the bundle.</p>
               <a href={forum.materialsBundleUrl} download className="inline-flex items-center gap-1.5 text-xs text-[#253855] font-medium hover:text-[#8A5E50]">
                 <Download className="w-3.5 h-3.5" />Download all
               </a>
@@ -392,6 +343,17 @@ function ForumDetail({
         {tab === "steering" && <SteeringCommitteeWorkspace forum={forum} member={member} />}
 
         {tab === "logistics" && <LogisticsPanel forum={forum} memberId={member.id} />}
+      </div>
+      <div className="mx-4 sm:mx-6 mb-6 rounded-lg border border-[#B17E6B]/30 bg-[#B17E6B]/[0.06] p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-[#253855] text-cream flex items-center justify-center flex-shrink-0"><UserRound className="w-4 h-4" /></div>
+          <div className="min-w-0"><p className="label-caps text-[#8A5E50]">Your Forum Director</p>{director ? <Link href={`/directors/${director.id}`} className="text-sm font-medium hover:text-[#8A5E50] hover:underline">{director.name}</Link> : <p className="text-sm font-medium">{forum.logistics.contactName}</p>}<p className="text-xs text-muted-foreground">Questions about attendance, travel, or materials</p></div>
+        </div>
+        <div className="flex gap-2 flex-wrap min-w-0">
+          {director && <Link href={`/directors/${director.id}`} className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"><UserRound className="w-3.5 h-3.5" />View profile</Link>}
+          <a href={`mailto:${forum.logistics.contactEmail}`} className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"><Mail className="w-3.5 h-3.5" />Email</a>
+          <a href={`mailto:${forum.logistics.contactEmail}?subject=${encodeURIComponent(`Next Forum connection: ${forumDisplayTitle(forum.title)}`)}&body=${encodeURIComponent(`Hello ${forum.logistics.contactName},\n\nI would like to connect about the next ${forumDisplayTitle(forum.title)}.\n\nThank you.`)}`} className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"><CalendarPlus className="w-3.5 h-3.5" />Connect About the Next Forum</a>
+        </div>
       </div>
     </div>
   );
@@ -427,6 +389,15 @@ function LogisticsPanel({ forum, memberId }: { forum: Forum; memberId: string })
 
   return (
     <div className="space-y-5 text-sm">
+      <div className="flex justify-end">
+        <a
+          href="/materials/prototype-logistics.txt"
+          download={`${forumDisplayTitle(forum.title)}-${forum.editionYear}-logistics.txt`}
+          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#253855]/20 px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5"
+        >
+          <Download className="h-3.5 w-3.5" />Download logistics
+        </a>
+      </div>
       <div className="grid gap-3 md:grid-cols-2">
         <section className="rounded-lg border border-border bg-white p-4">
           <div className="flex items-start gap-3">
@@ -591,7 +562,7 @@ function AgendaLinks({ item }: { item: AgendaItem }) {
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {item.discussionLeaders.map(leader => (
               <div key={`${leader.name}-${leader.organization}`} className="rounded-md border border-border bg-white px-3 py-2">
-                <p className="text-xs font-medium text-foreground">{leader.name}</p>
+                <Link href={leader.memberId ? `/directory/${leader.memberId}` : `/search?q=${encodeURIComponent(leader.name)}`} className="text-xs font-medium text-[#253855] hover:underline">{leader.name}</Link>
                 <p className="text-[11px] text-muted-foreground">{leader.organization}</p>
                 <p className="text-[11px] text-muted-foreground">{leader.location}</p>
               </div>
@@ -609,11 +580,21 @@ function formatAgendaDay(date: string): string {
 }
 
 function SessionMaterials({ forum, memberId, onMaterialSeen }: { forum: Forum; memberId: string; onMaterialSeen: () => void }) {
-  const sessions = forum.agenda.filter(item => item.sessionId && forum.materials.some(material => material.sessionId === item.sessionId));
-  const unassigned = forum.materials.filter(material => !material.sessionId);
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLowerCase();
+  const matchingMaterials = forum.materials.filter(material => {
+    const session = forum.agenda.find(item => item.sessionId === material.sessionId);
+    return !normalizedQuery || `${material.title} ${material.type} ${material.category} ${session?.title ?? ""} ${session?.discussionLeaders?.map(leader => `${leader.name} ${leader.organization}`).join(" ") ?? ""}`.toLowerCase().includes(normalizedQuery);
+  });
+  const sessions = forum.agenda.filter(item => item.sessionId && matchingMaterials.some(material => material.sessionId === item.sessionId));
+  const unassigned = matchingMaterials.filter(material => !material.sessionId);
 
   return (
     <div className="space-y-5">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input aria-label="Search Forum materials" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search Forum materials by title, session, or discussion leader…" className="h-10 w-full rounded-md border border-border bg-white pl-9 pr-3 text-sm focus:border-[#B17E6B] focus:outline-none" />
+      </div>
       {sessions.map(session => {
         const materials = forum.materials.filter(material => material.sessionId === session.sessionId);
         return (
@@ -641,9 +622,10 @@ function SessionMaterials({ forum, memberId, onMaterialSeen }: { forum: Forum; m
       })}
       {unassigned.length > 0 && (
         <section>
-          <MaterialGroup title="General Forum materials" description="Documents that apply across the Forum programme." materials={unassigned} memberId={memberId} onMaterialSeen={onMaterialSeen} />
+          <MaterialGroup title="General Forum materials" description="Documents that apply across the full Forum." materials={unassigned} memberId={memberId} onMaterialSeen={onMaterialSeen} />
         </section>
       )}
+      {matchingMaterials.length === 0 && <p className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-muted-foreground">No materials match your search.</p>}
     </div>
   );
 }
@@ -664,6 +646,7 @@ function MaterialGroup({
   required?: boolean;
 }) {
   const [seenInSession, setSeenInSession] = useState<Set<string>>(() => new Set());
+  const [savedIds, setSavedIds] = useState<string[]>(() => getSavedMaterialIds());
   if (!materials.length) return null;
   return (
     <section className={`mb-5 last:mb-0 rounded-lg ${required ? "border border-[#B17E6B]/35 bg-[#B17E6B]/[0.055]" : "border border-border"}`}>
@@ -686,8 +669,9 @@ function MaterialGroup({
                   {unseen && <Badge className="bg-[#253855] text-cream border-0 text-[9px] h-4">{material.revision > 1 ? "Updated" : "New"}</Badge>}
                 </div>
                 <p className="text-xs text-muted-foreground capitalize">{material.type} · {material.size} · Added {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(new Date(`${material.publishedAt}T12:00:00`))}</p>
+                {material.access?.kind === "subscription" && <p className="mt-1 text-[11px] font-medium text-[#8A5E50]">Requires subscription to {material.access.publication} · Not included in Download All</p>}
               </div>
-              <button
+              <div className="flex items-center gap-2 flex-shrink-0"><button type="button" onClick={() => setSavedIds(toggleSavedMaterial(material.id))} className={`p-1.5 rounded ${savedIds.includes(material.id) ? "text-[#8A5E50] bg-[#B17E6B]/10" : "text-muted-foreground hover:text-[#8A5E50]"}`} aria-label={`${savedIds.includes(material.id) ? "Remove from" : "Save to"} My Library`}><Bookmark className={`w-3.5 h-3.5 ${savedIds.includes(material.id) ? "fill-current" : ""}`} /></button><button
                 type="button"
                 onClick={() => {
                   if (unseen) {
@@ -699,8 +683,8 @@ function MaterialGroup({
                 }}
                 className="flex items-center gap-1.5 text-xs text-[#253855] hover:text-[#8A5E50] font-medium transition-colors flex-shrink-0"
               >
-                <Eye className="w-3.5 h-3.5" />Open
-              </button>
+                <Eye className="w-3.5 h-3.5" />{material.access ? "Open article" : "Open"}
+              </button></div>
             </div>
           );
         })}
@@ -746,14 +730,18 @@ function SteeringCommitteeWorkspace({ forum, member }: { forum: Forum; member: M
 
 function ParticipantList({ forum }: { forum: Forum }) {
   const participants = forum.participants.map(id => getResolvedMember(id)).filter(Boolean) as Member[];
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredParticipants = participants.filter(participant => !normalizedQuery || `${participant.name} ${participant.organization} ${participant.title} ${participant.location}`.toLowerCase().includes(normalizedQuery));
   return (
     <div>
-      <div className="mb-4">
-        <h3 className="font-garamond text-lg font-medium">Forum participants</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">Select a participant to view their full directory profile and contact preferences.</p>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div><h3 className="font-garamond text-lg font-medium">Forum participants</h3><p className="text-xs text-muted-foreground mt-0.5">Select a participant to view their full directory profile and contact preferences.</p></div>
+        <a href="/materials/prototype-participant-roster.txt" download className="inline-flex h-8 w-fit items-center gap-1.5 rounded-md border border-[#253855]/20 px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5"><Download className="h-3.5 w-3.5" />Download participant roster</a>
       </div>
+      <div className="relative mb-4"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input aria-label="Search Forum participants" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search participants by name or organization…" className="h-10 w-full rounded-md border border-border bg-white pl-9 pr-3 text-sm focus:border-[#B17E6B] focus:outline-none" /></div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {participants.map(participant => {
+        {filteredParticipants.map(participant => {
           const tenure = getMemberTenure(participant);
           const milestoneYears = getMemberAnniversaryMilestone(participant);
           const isCoChair = participant.coChairForums?.includes(forum.id);
@@ -762,7 +750,7 @@ function ParticipantList({ forum }: { forum: Forum }) {
           return (
             <article key={participant.id} className={`rounded-lg border bg-white p-4 transition-colors ${milestoneYears ? "border-[#B17E6B]/60 bg-[#B17E6B]/[0.045] shadow-sm" : "border-border hover:border-[#B17E6B]/50"}`}>
               <div className="flex items-start gap-3">
-                <Link href={`/directory/${participant.id}`} aria-label={`View ${displayName}'s profile`} className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-[#253855]/10">
+                <Link href={`/directory/${participant.id}?from=forum`} aria-label={`View ${displayName}'s profile`} className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-[#253855]/10">
                   {participant.photo ? (
                     <img src={participant.photo} alt="" className="w-full h-full object-cover" />
                   ) : (
@@ -771,15 +759,20 @@ function ParticipantList({ forum }: { forum: Forum }) {
                 </Link>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <Link href={`/directory/${participant.id}`} className="text-sm font-medium hover:text-[#8A5E50] hover:underline">{displayName}</Link>
+                    <Link href={`/directory/${participant.id}?from=forum`} className="text-sm font-medium hover:text-[#8A5E50] hover:underline">{displayName}</Link>
                     <div className="flex flex-wrap justify-end gap-1">
                       {isCoChair && <Badge className="bg-[#253855] text-cream border-0 text-[9px] h-4">Committee Co-Chair</Badge>}
                       {isSteeringCommittee && <Badge className="bg-[#B17E6B]/12 text-[#8A5E50] border-0 text-[9px] h-4">Steering Committee</Badge>}
-                      {milestoneYears && <Badge className="bg-[#B17E6B] text-white border-0 text-[9px] h-4 gap-1"><Award className="w-2.5 h-2.5" />{milestoneYears}-year anniversary attendee</Badge>}
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">{participant.title}</p>
                   <p className="text-xs font-medium mt-0.5">{participant.organization}</p>
+                  {milestoneYears && (
+                    <p className="mt-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8A5E50]">
+                      <Award className="h-3 w-3" aria-hidden="true" />
+                      {milestoneYears}-year anniversary attendee
+                    </p>
+                  )}
                   <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1"><Globe className="w-3 h-3" />{participant.location}</p>
                 </div>
               </div>
@@ -794,20 +787,21 @@ function ParticipantList({ forum }: { forum: Forum }) {
                   {participant.contactPreference === "email" && participant.phone && (
                     <a href={`tel:${participant.phone}`} className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Phone className="w-3 h-3" />Phone</a>
                   )}
-                  <Link href={`/directory/${participant.id}`} className="text-[11px] font-medium text-[#253855] hover:underline">View profile</Link>
+                  <Link href={`/directory/${participant.id}?from=forum`} className="text-[11px] font-medium text-[#253855] hover:underline">View profile</Link>
                 </div>
               </div>
             </article>
           );
         })}
       </div>
+      {filteredParticipants.length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">No participants match your search.</p>}
 
       {forum.representatives?.length ? (
         <section className="mt-7 pt-6 border-t border-border">
           <div className="mb-4">
             <p className="label-caps text-[#8A5E50]">Cambridge Forums</p>
-            <h3 className="font-garamond text-lg font-medium mt-0.5">Cambridge representatives</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">Your on-site contacts for programme, attendance, and event support.</p>
+            <h3 className="font-garamond text-lg font-medium mt-0.5">Cambridge Team</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Your on-site contacts for Forum, attendance, and event support.</p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {forum.representatives.map(representative => (
@@ -860,9 +854,10 @@ export default function DashboardPage() {
     <AppShell>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         <div className="mb-8">
-          <p className="label-caps text-[#B17E6B] mb-1">My Forums</p>
-          <h1 className="font-garamond text-3xl font-medium text-foreground">Good to see you, {member.name.split(" ")[0]}.</h1>
-          <p className="text-muted-foreground text-sm mt-1">Respond to invitations and find everything Cambridge has shared with you.</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div><p className="label-caps text-[#B17E6B] mb-1">My Forums</p><h1 className="font-garamond text-3xl font-medium text-foreground">Good to see you, {member.name.split(" ")[0]}.</h1><p className="text-muted-foreground text-sm mt-1">Respond to invitations and find everything Cambridge has shared with you.</p></div>
+            <Link href="/search" className="inline-flex h-10 w-full items-center gap-2 rounded-md border border-[#253855]/20 bg-white px-3 text-sm font-medium text-[#253855] shadow-sm hover:bg-[#253855]/5 sm:w-auto"><Search className="h-4 w-4" />Search Cambridge</Link>
+          </div>
         </div>
 
         {upcoming.length > 0 && (
@@ -871,14 +866,14 @@ export default function DashboardPage() {
               <h2 className="font-garamond text-xl font-medium">Upcoming Forums</h2>
               <span className="bg-[#253855] text-cream text-[10px] px-1.5 py-0.5 rounded font-medium">{upcoming.length}</span>
             </div>
-            <div className="space-y-3">{upcoming.map(forum => <ForumCard key={forum.id} forum={forum} member={member} />)}</div>
+            <div className="space-y-3">{upcoming.map((forum, index) => <ForumCard key={forum.id} forum={forum} member={member} defaultOpen={index === 0} />)}</div>
           </section>
         )}
 
         {past.length > 0 && (
           <section>
             <h2 className="font-garamond text-xl font-medium mb-3">Past Forums</h2>
-            <div className="space-y-3">{past.map(forum => <ForumCard key={forum.id} forum={forum} member={member} />)}</div>
+            <div className="space-y-3">{past.map(forum => <ForumCard key={forum.id} forum={forum} member={member} defaultOpen={false} />)}</div>
           </section>
         )}
 

@@ -60,7 +60,7 @@ export default function ForumDirectorProfilePage() {
         </div>
 
         <div className="bg-white rounded-lg border border-border px-5 sm:px-6 py-5 mb-4">
-          <h2 className="font-garamond text-base font-medium text-foreground mb-2">How Sarah can help</h2>
+          <h2 className="font-garamond text-base font-medium text-foreground mb-2">How {director.name.split(" ")[0]} can help</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">{director.bio}</p>
         </div>
 

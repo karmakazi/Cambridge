@@ -15,7 +15,10 @@ import {
 } from "@/lib/prototype-service";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Award, Globe, Mail, Phone, Search, X } from "lucide-react";
+import { getFavoriteMemberIds, toggleFavoriteMember } from "@/lib/saved-items";
+import { Award, Bookmark, Globe, Mail, Phone, Search, X } from "lucide-react";
+
+type DirectoryView = DirectoryScope | "saved";
 
 const PRACTICE_AREAS = [
   "Antitrust", "Compliance & Corporate Governance", "Corporate Law & Finance",
@@ -34,7 +37,8 @@ export default function DirectoryPage() {
   const router = useRouter();
   const [currentMemberId, setCurrentMemberId] = useState("");
   const [forums, setForums] = useState<Forum[]>([]);
-  const [scope, setScope] = useState<DirectoryScope>("network");
+  const [scope, setScope] = useState<DirectoryView>("network");
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [forumId, setForumId] = useState("");
   const [query, setQuery] = useState("");
   const [practice, setPractice] = useState("");
@@ -48,13 +52,14 @@ export default function DirectoryPage() {
       if (!auth) { router.replace("/"); return; }
       setCurrentMemberId(auth.memberId);
       setForums(getDirectoryForums(auth.memberId));
+      setFavoriteIds(getFavoriteMemberIds());
     });
     return () => { cancelled = true; };
   }, [router]);
 
   const members = useMemo(
-    () => currentMemberId ? getDirectoryMembers(currentMemberId, scope, forumId) : [],
-    [currentMemberId, scope, forumId],
+    () => currentMemberId ? getDirectoryMembers(currentMemberId, scope === "saved" ? "all" : scope, forumId).filter(member => scope !== "saved" || favoriteIds.includes(member.id)) : [],
+    [currentMemberId, scope, forumId, favoriteIds],
   );
 
   const filtered = useMemo(() => {
@@ -92,7 +97,9 @@ export default function DirectoryPage() {
           {([
             ["network", "My Forum Network"],
             ["all", "All Cambridge Members"],
-          ] as Array<[DirectoryScope, string]>).map(([value, label]) => (
+            ["saved", "Saved Participants"],
+            ["team", "Cambridge Team"],
+          ] as Array<[DirectoryView, string]>).map(([value, label]) => (
             <button
               type="button"
               key={value}
@@ -103,6 +110,7 @@ export default function DirectoryPage() {
             >
               {label}
               {value === "all" && <Badge className="ml-1.5 bg-[#B17E6B]/15 text-[#8A5E50] border-0 text-[8px] h-4 px-1.5">Beta</Badge>}
+              {value === "saved" && favoriteIds.length > 0 && <Badge className="ml-1.5 bg-[#253855]/10 text-[#253855] border-0 text-[8px] h-4 px-1.5">{favoriteIds.length}</Badge>}
             </button>
           ))}
         </div>
@@ -160,11 +168,11 @@ export default function DirectoryPage() {
 
         <p className="text-xs text-muted-foreground mb-4">
           {filtered.length} {filtered.length === 1 ? "member" : "members"} found
-          {scope === "network" ? " in your forum network" : " across Cambridge"}
+          {scope === "network" ? " in your forum network" : scope === "team" ? " on the Cambridge Team" : " across Cambridge"}
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {filtered.map(member => <MemberCard key={member.id} member={member} />)}
+          {filtered.map(member => <MemberCard key={member.id} member={member} saved={favoriteIds.includes(member.id)} onToggleSaved={() => setFavoriteIds(toggleFavoriteMember(member.id))} />)}
         </div>
 
         {filtered.length === 0 && (
@@ -179,7 +187,7 @@ export default function DirectoryPage() {
   );
 }
 
-function MemberCard({ member }: { member: Member }) {
+function MemberCard({ member, saved, onToggleSaved }: { member: Member; saved: boolean; onToggleSaved: () => void }) {
   const tenure = getMemberTenure(member);
   const milestoneYears = getMemberAnniversaryMilestone(member);
   const displayName = member.publishedName || member.name;
@@ -197,14 +205,24 @@ function MemberCard({ member }: { member: Member }) {
           <div className="flex items-start justify-between gap-2">
             <Link href={`/directory/${member.id}`} className="font-medium text-sm text-foreground group-hover:text-[#8A5E50] transition-colors leading-tight hover:underline">{displayName}</Link>
             <div className="flex items-center gap-1 flex-shrink-0">
-              {milestoneYears && <Badge className="bg-[#B17E6B] text-white text-[9px] px-1.5 h-4 border-0 font-medium gap-1"><Award className="w-2.5 h-2.5" />{milestoneYears}-year anniversary</Badge>}
-              {tenure.count > 0 && <Badge className="bg-[#253855]/[0.07] text-[#253855] text-[9px] px-1.5 h-4 border-0 font-medium">{tenure.count} Forum{tenure.count === 1 ? "" : "s"}</Badge>}
+              {!member.isCambridgeStaff && <button type="button" onClick={onToggleSaved} aria-label={`${saved ? "Remove" : "Save"} ${displayName}`} className={`p-1 rounded transition-colors ${saved ? "text-[#8A5E50] bg-[#B17E6B]/10" : "text-muted-foreground hover:text-[#8A5E50] hover:bg-[#B17E6B]/10"}`}><Bookmark className={`w-3.5 h-3.5 ${saved ? "fill-current" : ""}`} /></button>}
+              {member.isCambridgeStaff && <Badge className="bg-[#253855] text-white text-[9px] px-1.5 h-4 border-0">Cambridge Team</Badge>}
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5 truncate">{member.title}</p>
           <p className="text-xs text-muted-foreground truncate">{member.organization}</p>
+          {milestoneYears && (
+            <p className="mt-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8A5E50]">
+              <Award className="h-3 w-3" aria-hidden="true" />
+              {milestoneYears}-year anniversary attendee
+            </p>
+          )}
           <span className="flex items-center gap-1 text-[10px] text-muted-foreground mt-2"><Globe className="w-3 h-3" />{member.jurisdiction}</span>
-          {tenure.firstYear && <p className="text-[10px] text-muted-foreground mt-1">First attended {tenure.firstYear}</p>}
+          {tenure.count > 0 && (
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              {tenure.count} Forum {tenure.count === 1 ? "edition" : "editions"}{tenure.firstYear ? ` · first attended ${tenure.firstYear}` : ""}
+            </p>
+          )}
 
           <div className="mt-2 space-y-1">
             {member.contactPreference === "email" && (

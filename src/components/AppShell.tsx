@@ -7,12 +7,14 @@ import { getAuth, clearAuth } from "@/lib/auth";
 import { getResolvedMember } from "@/lib/store";
 import type { Member } from "@/lib/data";
 import BrandLogo from "@/components/BrandLogo";
-import { LayoutDashboard, MessageCircle, Users, UserCircle, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Library, MessageCircle, Search, Users, UserCircle, LogOut, Menu, X } from "lucide-react";
 
 const NAV = [
   { href: "/dashboard", label: "My Forums", icon: LayoutDashboard },
   { href: "/directory", label: "Directory", icon: Users },
   { href: "/member-exchange", label: "Member Exchange", icon: MessageCircle },
+  { href: "/search", label: "Search", icon: Search },
+  { href: "/library", label: "My Library", icon: Library },
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
 
@@ -27,6 +29,8 @@ function SidebarContent({ member, pathname, onNavigate, onSignOut }: { member: M
           const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
           return <Link key={href} href={href} onClick={onNavigate} className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all ${active ? "bg-white/10 text-cream" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}><Icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-gold" : ""}`} />{label}</Link>;
         })}
+        <div className="my-3 border-t border-white/8" />
+        <button onClick={onSignOut} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-white/50 hover:text-white/80 hover:bg-white/5 transition-all"><LogOut className="w-4 h-4" />Sign out</button>
       </nav>
       <div className="px-4 py-4 border-t border-white/8">
         <div className="flex items-center gap-3 mb-3">
@@ -35,7 +39,6 @@ function SidebarContent({ member, pathname, onNavigate, onSignOut }: { member: M
           </div>
           <div className="min-w-0"><p className="text-cream text-xs font-medium truncate">{member.name}</p><p className="text-white/35 text-[11px] truncate">{member.organization}</p></div>
         </div>
-        <button onClick={onSignOut} className="flex items-center gap-2 text-white/35 hover:text-white/60 text-xs transition-colors"><LogOut className="w-3.5 h-3.5" />Sign out</button>
       </div>
     </div>
   );

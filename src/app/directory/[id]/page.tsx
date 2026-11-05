@@ -7,17 +7,19 @@ import AppShell from "@/components/AppShell";
 import { getAuth } from "@/lib/auth";
 import { getResolvedMember } from "@/lib/store";
 import { FORUMS, getForumEditionSummary } from "@/lib/data";
-import type { Member, Forum } from "@/lib/data";
+import type { ForumEditionSummary, Member } from "@/lib/data";
 import { getForumHistory, getMemberAnniversaryMilestone, getMemberTenure } from "@/lib/prototype-service";
+import { getFavoriteMemberIds, toggleFavoriteMember } from "@/lib/saved-items";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Award, Mail, Globe, MapPin, Phone, Building2, Users, ExternalLink } from "lucide-react";
+import { ArrowLeft, Award, Bookmark, Mail, Globe, MapPin, Phone, Building2, Users, ExternalLink } from "lucide-react";
 
 export default function MemberProfilePage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const [member, setMember] = useState<Member | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [sharedForums, setSharedForums] = useState<Forum[]>([]);
+  const [sharedForums, setSharedForums] = useState<ForumEditionSummary[]>([]);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,17 +32,15 @@ export default function MemberProfilePage() {
       const resolvedMember = getResolvedMember(id);
       if (!resolvedMember) { router.push("/directory"); return; }
       setMember(resolvedMember);
+      setSaved(getFavoriteMemberIds().includes(resolvedMember.id));
 
       const currentMember = getResolvedMember(auth.memberId);
-      const currentPrograms = new Set((currentMember?.forumsAttended ?? []).map(fid => getForumEditionSummary(fid)?.programId));
-      const profilePrograms = new Set(resolvedMember.forumsAttended.map(fid => getForumEditionSummary(fid)?.programId));
-      const sharedProgramIds = new Set([...currentPrograms].filter(programId => programId && profilePrograms.has(programId)));
-      const seenPrograms = new Set<string>();
-      const shared = FORUMS.filter(forum => {
-        if (!sharedProgramIds.has(forum.programId) || seenPrograms.has(forum.programId)) return false;
-        seenPrograms.add(forum.programId);
-        return true;
-      });
+      const currentEditions = new Set(currentMember?.forumsAttended ?? []);
+      const shared = resolvedMember.forumsAttended
+        .filter(forumId => currentEditions.has(forumId))
+        .map(getForumEditionSummary)
+        .filter((edition): edition is ForumEditionSummary => Boolean(edition))
+        .sort((a, b) => b.year - a.year);
       setSharedForums(shared);
     });
     return () => { cancelled = true; };
@@ -57,10 +57,10 @@ export default function MemberProfilePage() {
     <AppShell>
       <div className="max-w-2xl mx-auto px-6 py-10">
         {/* Back */}
-        <Link href="/directory" className="inline-flex items-center gap-1.5 text-muted-foreground text-xs hover:text-foreground mb-6 transition-colors">
+        <button type="button" onClick={() => router.back()} className="inline-flex items-center gap-1.5 text-muted-foreground text-xs hover:text-foreground mb-6 transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" />
-          Back to Directory
-        </Link>
+          Back to previous page
+        </button>
 
         {/* Profile header */}
         <div className="bg-white rounded-lg border border-border p-6 mb-4">
@@ -83,18 +83,24 @@ export default function MemberProfilePage() {
                   <p className="text-sm font-medium text-foreground mt-0.5">{member.organization}</p>
                 </div>
                 <div className="flex flex-wrap items-center sm:flex-col sm:items-end gap-1">
+                  {member.isCambridgeStaff && <Badge className="bg-[#253855] text-white border-0 text-[10px] font-medium">Cambridge Team</Badge>}
                   {tenure.count > 0 && (
-                    <Badge className="bg-[#253855]/[0.07] text-[#253855] border-0 text-[10px] font-medium">
+                    <span className="text-[11px] text-muted-foreground">
                       {tenure.count}-time participant{tenure.firstYear ? ` · since ${tenure.firstYear}` : ""}
-                    </Badge>
+                    </span>
                   )}
                   {milestoneYears && (
-                    <Badge className="bg-[#B17E6B] text-white border-0 text-[10px] font-medium gap-1 shadow-sm">
-                      <Award className="w-3 h-3" />{milestoneYears}-year anniversary attendee
-                    </Badge>
+                    <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8A5E50]">
+                      <Award className="h-3 w-3" aria-hidden="true" />{milestoneYears}-year anniversary attendee
+                    </span>
                   )}
                   {isOwnProfile && (
                     <Link href="/profile" className="text-xs text-[#B17E6B] hover:underline">Edit profile</Link>
+                  )}
+                  {!isOwnProfile && !member.isCambridgeStaff && (
+                    <button type="button" onClick={() => setSaved(toggleFavoriteMember(member.id).includes(member.id))} className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium ${saved ? "border-[#B17E6B] bg-[#B17E6B]/10 text-[#7A5144]" : "border-[#253855]/20 text-[#253855] hover:bg-[#253855]/5"}`}>
+                      <Bookmark className={`w-3.5 h-3.5 ${saved ? "fill-current" : ""}`} />{saved ? "Saved" : "Save participant"}
+                    </button>
                   )}
                 </div>
               </div>
@@ -137,7 +143,7 @@ export default function MemberProfilePage() {
         </div>
 
         {/* Forum history */}
-        <div className="bg-white rounded-lg border border-border px-6 py-5 mb-4">
+        {!member.isCambridgeStaff && <div className="bg-white rounded-lg border border-border px-6 py-5 mb-4">
           <h2 className="font-garamond text-base font-medium text-foreground mb-3">Forum Participation</h2>
           <div className="space-y-2">
             {forumHistory.map(edition => {
@@ -164,25 +170,26 @@ export default function MemberProfilePage() {
               );
             })}
           </div>
-        </div>
+        </div>}
 
         {/* Shared forums (if not own profile) */}
-        {!isOwnProfile && sharedForums.length > 0 && (
+        {!member.isCambridgeStaff && !isOwnProfile && sharedForums.length > 0 && (
           <div className="bg-white rounded-lg border border-border px-6 py-5 mb-4">
             <h2 className="font-garamond text-base font-medium text-foreground mb-3">
               <span className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-[#B17E6B]" />
-                Forums in Common
+                Forums Attended Together
               </span>
             </h2>
             <div className="space-y-2">
               {sharedForums.map(f => {
+                const status = FORUMS.find(forum => forum.id === f.id)?.status;
                 return (
                   <div key={f.id} className="flex items-center justify-between py-1">
-                    <p className="text-sm text-foreground">{f.title}</p>
+                    <div><p className="text-sm text-foreground">{f.title}</p><p className="text-xs text-muted-foreground">{f.location}</p></div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Latest edition: {f.editionYear}</span>
-                      {f.status === "upcoming" && (
+                      <span className="text-xs text-muted-foreground">{f.year}</span>
+                      {status === "upcoming" && (
                         <Badge className="bg-[#253855] text-cream text-[9px] px-1 h-4">Upcoming</Badge>
                       )}
                     </div>
@@ -206,7 +213,7 @@ export default function MemberProfilePage() {
           {member.contactPreference === "private" ? (
             <p className="text-sm text-muted-foreground italic">
               {isOwnProfile
-                ? "Your contact details are hidden. Only Cambridge staff can connect you with other members."
+                ? "Your contact details are hidden. Only the Cambridge Team can connect you with other members."
                 : "This member has set their contact information as private. Contact through Cambridge Forums."}
             </p>
           ) : member.contactPreference === "request-intro" ? (

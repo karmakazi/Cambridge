@@ -3,13 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getAuth, setPendingEmail, loginAsAssistant, loginWithPassword } from "@/lib/auth";
+import { getAuth, isReturningMember, setPendingEmail, loginWithPassword } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, BriefcaseBusiness, Mail, Lock } from "lucide-react";
+import { ArrowRight, Mail, Lock } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
-
-const EMAIL_CHANGE_REQUEST = `mailto:webhelp@cambridgeforums.com?subject=${encodeURIComponent("Email change request – Cambridge Forums member account")}&body=${encodeURIComponent("Hello Cambridge team,\n\nI have changed firms or no longer have access to the email address on my Cambridge Forums account. Please help me verify my identity and update my email.\n\nFull name:\nFormer email address:\nNew email address:\nFormer firm:\nCurrent firm:\nMost recent Cambridge Forum attended:\n\nThank you.")}`;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,10 +17,14 @@ export default function LoginPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [returning, setReturning] = useState(false);
 
   useEffect(() => {
-    const auth = getAuth();
-    if (auth) router.replace(auth.role === "assistant" ? "/assistant-dashboard" : "/dashboard");
+    queueMicrotask(() => {
+      setReturning(isReturningMember());
+      const auth = getAuth();
+      if (auth) router.replace(auth.role === "assistant" ? "/assistant-dashboard" : "/dashboard");
+    });
   }, [router]);
 
   function handleMagicLink(e: React.FormEvent) {
@@ -67,7 +69,7 @@ export default function LoginPage() {
               <>
                 <div className="mb-8">
                   <h1 className="font-garamond text-cream text-3xl font-medium mb-2">
-                    Welcome back.
+                    {returning ? "Welcome back." : "Welcome."}
                   </h1>
                   <p className="text-white/50 text-sm leading-relaxed">
                     Sign in to access your forums, member directory, and resources.
@@ -85,7 +87,7 @@ export default function LoginPage() {
                     }`}
                   >
                     <Mail className="inline w-3.5 h-3.5 mr-1.5" />
-                    Magic Link
+                    One-click sign in
                   </button>
                   <button
                     onClick={() => { setMode("password"); setError(""); }}
@@ -119,7 +121,7 @@ export default function LoginPage() {
                       disabled={loading}
                       className="w-full bg-[#B17E6B] hover:bg-[#C79786] text-white font-medium"
                     >
-                      {loading ? "Sending…" : "Send Magic Link"}
+                      {loading ? "Sending…" : "Continue"}
                       <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                     <p className="text-white/30 text-xs text-center leading-relaxed">
@@ -165,14 +167,15 @@ export default function LoginPage() {
                         onClick={() => { setMode("magic-link"); setError(""); }}
                         className="text-white/30 text-xs hover:text-gold transition-colors"
                       >
-                        Prefer a magic link instead?
+                        Prefer one-click sign in instead?
                       </button>
                     </p>
                   </form>
                 )}
-                <div className="border-t border-white/10 mt-6 pt-5 text-center">
-                  <Link href="/account-help" className="text-white/55 text-xs hover:text-gold transition-colors">Trouble signing in?</Link>
-                  <a href={EMAIL_CHANGE_REQUEST} className="mt-2 block text-gold text-xs hover:underline">Changed firms or lost access to your registered email?</a>
+                <div className="border border-white/15 bg-white/[0.05] rounded-lg mt-6 p-4 text-left">
+                  <p className="text-cream text-sm font-medium">Can&apos;t access your account?</p>
+                  <p className="text-white/45 text-xs mt-1 leading-relaxed">Get help with an expired link, changed firm, or email address you can no longer access.</p>
+                  <div className="mt-3"><Link href="/account-help" className="text-gold text-sm font-medium hover:underline">Trouble signing in? View recovery options</Link></div>
                 </div>
               </>
             ) : (
@@ -198,7 +201,7 @@ export default function LoginPage() {
                     variant="outline"
                     className="border-white/20 text-cream bg-white/5 hover:bg-white/10 w-full"
                   >
-                    Open Magic Link
+                    Open sign-in link
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </div>
@@ -211,23 +214,6 @@ export default function LoginPage() {
                 <Link href="/account-help" className="block text-gold/80 text-xs hover:text-gold hover:underline">Link expired or didn&apos;t arrive?</Link>
               </div>
             )}
-          </div>
-
-          <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] p-4 text-left">
-            <div className="flex items-start gap-3">
-              <BriefcaseBusiness className="mt-0.5 h-4 w-4 flex-shrink-0 text-gold" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-cream">Assistant access demo</p>
-                <p className="mt-1 text-xs leading-relaxed text-white/45">Preview the restricted workspace for Elena Marchetti’s personal assistant.</p>
-                <button
-                  type="button"
-                  onClick={() => { if (loginAsAssistant("m001")) router.push("/assistant-dashboard"); }}
-                  className="mt-3 text-xs font-medium text-gold hover:underline"
-                >
-                  Sign in as Elena’s assistant <ArrowRight className="ml-1 inline h-3 w-3" />
-                </button>
-              </div>
-            </div>
           </div>
 
           {/* Footer */}

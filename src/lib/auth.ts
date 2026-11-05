@@ -4,6 +4,7 @@ import { getAllResolvedMembers } from "./store";
 
 const AUTH_KEY = "cf_auth";
 const PENDING_KEY = "cf_pending_email";
+const RETURNING_MEMBER_KEY = "cf_returning_member";
 
 export type AuthState = {
   memberId: string;
@@ -27,6 +28,11 @@ export function getAuth(): AuthState | null {
 
 export function setAuth(state: AuthState) {
   localStorage.setItem(AUTH_KEY, JSON.stringify(state));
+  localStorage.setItem(RETURNING_MEMBER_KEY, "true");
+}
+
+export function isReturningMember(): boolean {
+  return typeof window !== "undefined" && localStorage.getItem(RETURNING_MEMBER_KEY) === "true";
 }
 
 export function clearAuth() {

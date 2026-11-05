@@ -58,6 +58,7 @@ export type Forum = {
   representatives?: ForumRepresentative[];
   overview?: ForumOverview;
   notices?: ForumNotice[];
+  updateCounts?: { agenda?: number; participants?: number };
 };
 
 export type ForumNotice = {
@@ -112,6 +113,7 @@ export type Material = {
   publishedAt: string;
   revision: number;
   sessionId?: string;
+  access?: { kind: "subscription"; publication: string };
 };
 
 export type ForumEditionSummary = {
@@ -503,20 +505,70 @@ export const MEMBERS: Member[] = [
     avatar: "SC",
     photo: "",
   },
+  {
+    id: "staff-amelia-hart",
+    name: "Amelia Hart",
+    title: "Forum Director, International Disputes",
+    organization: "Cambridge Forums",
+    location: "Vancouver, Canada",
+    address: "",
+    phone: "+1 416 555 0184",
+    jurisdiction: "Cambridge Forums",
+    practiceArea: "Forum Direction",
+    expertise: ["International disputes", "Forum programming", "Participant experience"],
+    bio: "Amelia directs Cambridge Forums in international disputes and supports participants throughout the Forum experience.",
+    forumsAttended: [],
+    steeringCommitteeForums: [],
+    contactEmail: "amelia.hart@example.com",
+    contactPreference: "email",
+    discoverable: false,
+    notifyQaDigest: true,
+    notifyQaNewPosts: false,
+    notifyQaReplies: false,
+    notifyQaMentions: false,
+    isCambridgeStaff: true,
+    avatar: "AH",
+    photo: "",
+  },
+  {
+    id: "staff-nora-bennett",
+    name: "Nora Bennett",
+    title: "Forum & Event Coordinator",
+    organization: "Cambridge Forums",
+    location: "Toronto, Canada",
+    address: "",
+    phone: "+1 416 555 0119",
+    jurisdiction: "Cambridge Forums",
+    practiceArea: "Forum Coordination",
+    expertise: ["Event coordination", "Participant logistics", "Forum operations"],
+    bio: "Nora coordinates event logistics and participant support for Cambridge Forums.",
+    forumsAttended: [],
+    steeringCommitteeForums: [],
+    contactEmail: "nora.bennett@example.com",
+    contactPreference: "email",
+    discoverable: false,
+    notifyQaDigest: true,
+    notifyQaNewPosts: false,
+    notifyQaReplies: false,
+    notifyQaMentions: false,
+    isCambridgeStaff: true,
+    avatar: "NB",
+    photo: "",
+  },
 ];
 
 // Cambridge staff are kept separate from forum participants so they can have
 // useful profiles without appearing to have member attendance history.
 export const FORUM_DIRECTORS: ForumDirector[] = [
   {
-    id: "shona-fox",
-    name: "Shóna Fox",
-    title: "Forum Director, Financial Regulation, Enforcement & Transactions",
+    id: "amelia-hart",
+    name: "Amelia Hart",
+    title: "Forum Director, International Disputes",
     organization: "Cambridge Forums Inc.",
-    bio: "Shóna directs Cambridge Forums programmes in financial regulation, enforcement, and transactions and supports participants throughout the Forum experience.",
-    contactEmail: "sfox@cambridgeforums.com",
-    contactPhone: "+1 647 673 5281",
-    avatar: "SF",
+    bio: "Amelia directs Cambridge Forums in international disputes and supports participants throughout the Forum experience.",
+    contactEmail: "amelia.hart@example.com",
+    contactPhone: "+1 416 555 0184",
+    avatar: "AH",
   },
   {
     id: "sarah-chen",
@@ -556,7 +608,7 @@ export const FORUMS: Forum[] = [
     overview: {
       summary: "An invitation-only gathering for experienced lawyers and trust professionals who advise international HNW and UHNW families through disputes and contentious matters.",
       participantProfile: "Up to 48 peer-selected practitioners, typically with 15 to 25 years of experience, come together to exchange practical insight and address shared challenges.",
-      format: "There are no traditional presentations. The programme depends on active participation through two days of off-the-record, roundtable discussion and debate.",
+      format: "There are no traditional presentations. The Forum depends on active participation through two days of off-the-record, roundtable discussion and debate.",
       atmosphere: "The Forum is designed as time away from the demands of the office: informal, face-to-face conversation that develops into a collegial community of trusted peers.",
       principles: ["Peer selected", "Off the record", "Roundtable format", "Active participation"],
     },
@@ -569,6 +621,7 @@ export const FORUMS: Forum[] = [
         urgent: true,
       },
     ],
+    updateCounts: { agenda: 1, participants: 2 },
     agenda: [
       { date: "2026-10-14", time: "14:00", title: "Check-In", description: "Guest check-in opens at Lapa Palace.", kind: "logistics", venueName: "Lapa Palace" },
       { date: "2026-10-14", time: "15:30", endTime: "18:30", title: "Optional Private Tour of Belém", description: "Meet in the hotel lobby for departure. Participation is optional.", kind: "social", optional: true, venueName: "Meet in hotel lobby" },
@@ -619,7 +672,7 @@ export const FORUMS: Forum[] = [
           { name: "Mathew M. Wrenshall", organization: "RMO, LLP", location: "Pasadena, United States" },
         ],
       },
-      { date: "2026-10-15", time: "16:40", title: "End of Day 2", description: "Formal programme concludes for the day.", kind: "logistics" },
+      { date: "2026-10-15", time: "16:40", title: "End of Day 2", description: "Formal Forum sessions conclude for the day.", kind: "logistics" },
       { date: "2026-10-15", time: "18:40", title: "Departure for Reception & Dinner", description: "Meet in the hotel lobby for group departure.", kind: "logistics", venueName: "Meet in hotel lobby" },
       { date: "2026-10-15", time: "19:00", title: "Reception & Dinner", description: "Evening reception and dinner at Palácio Chiado.", kind: "social", venueName: "Palácio Chiado", venueAddress: "Palácio Chiado, Lisbon, Portugal" },
       { date: "2026-10-16", time: "08:00", title: "Breakfast", description: "Breakfast for Forum participants.", kind: "meal", venueName: "Monsanto" },
@@ -660,15 +713,16 @@ export const FORUMS: Forum[] = [
       { id: "mat008-iwd", sessionId: "ai-advocate-or-adversary", title: "United States v. Heppner", type: "pdf", size: "1.4 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-11", revision: 1 },
       { id: "mat009-iwd", sessionId: "ai-advocate-or-adversary", title: "Warner v. Gilbarco, Inc.", type: "pdf", size: "870 KB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-11", revision: 1 },
       { id: "mat010-iwd", sessionId: "ai-advocate-or-adversary", title: "Cambridge AI Forum Submission", type: "reading", size: "420 KB", url: "/materials/prototype-resource.txt", category: "supplementary", publishedAt: "2026-10-12", revision: 1 },
+      { id: "mat010b-iwd", sessionId: "ai-advocate-or-adversary", title: "AI evidence and the changing role of the advocate", type: "reading", size: "External article", url: "https://www.thelawyer.com/", category: "supplementary", publishedAt: "2026-10-13", revision: 1, access: { kind: "subscription", publication: "The Lawyer" } },
       { id: "mat011-iwd", sessionId: "love-war-litigation", title: "Court of Appeal Decision in Salinas Pliego v. Astor Asset Management — 2026", type: "pdf", size: "1.6 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2026-10-12", revision: 1 },
     ],
     logistics: {
       hotel: "Lapa Palace",
       hotelAddress: "Rua do Pau de Bandeira 4, 1249-021 Lisbon, Portugal",
       dressCode: "Business attire for Forum sessions; smart casual for evening events",
-      contactName: "Shóna Fox",
-      contactEmail: "sfox@cambridgeforums.com",
-      contactPhone: "+1 647 673 5281",
+      contactName: "Amelia Hart",
+      contactEmail: "amelia.hart@example.com",
+      contactPhone: "+1 416 555 0184",
       notes: "Check-in begins Wednesday afternoon. Group departures for optional and evening activities leave from the hotel lobby.",
       airportName: "Humberto Delgado Airport",
       airportCode: "LIS",
@@ -679,36 +733,36 @@ export const FORUMS: Forum[] = [
       inclusions: [
         "Two nights of accommodation at Lapa Palace",
         "All Forum meals and refreshments",
-        "Forum sessions and social programme",
+        "Forum sessions and social events",
         "Online access to session materials",
       ],
       cleCpd: "CLE/CPD applications will be made and certificates will be issued based on attendance after the Forum, subject to jurisdictional approval.",
       cancellationPolicy: [
         { deadline: "Before 21 August 2026", outcome: "Full refund less a €250 administration fee." },
-        { deadline: "21 August–3 September 2026", outcome: "€1,000 credit toward a future programme, valid for two years." },
+        { deadline: "21 August–3 September 2026", outcome: "€1,000 credit toward a future Forum, valid for two years." },
         { deadline: "4 September 2026 or later", outcome: "The participant fee is non-refundable." },
       ],
     },
     representatives: [
       {
-        id: "shona-fox",
-        name: "Shóna Fox",
-        title: "Forum Director, Financial Regulation, Enforcement & Transactions",
+        id: "amelia-hart",
+        name: "Amelia Hart",
+        title: "Forum Director, International Disputes",
         organization: "Cambridge Forums Inc.",
         location: "Vancouver, Canada",
-        contactEmail: "sfox@cambridgeforums.com",
-        contactPhone: "+1 647 673 5281",
-        avatar: "SF",
+        contactEmail: "amelia.hart@example.com",
+        contactPhone: "+1 416 555 0184",
+        avatar: "AH",
       },
       {
-        id: "alyssa-da-silva",
-        name: "Alyssa Da Silva",
+        id: "nora-bennett",
+        name: "Nora Bennett",
         title: "Forum & Event Coordinator",
         organization: "Cambridge Forums Inc.",
         location: "Toronto, Canada",
-        contactEmail: "adasilva@cambridgeforums.com",
-        contactPhone: "+1 437 771 9174",
-        avatar: "AD",
+        contactEmail: "nora.bennett@example.com",
+        contactPhone: "+1 416 555 0119",
+        avatar: "NB",
       },
     ],
   },
@@ -815,7 +869,11 @@ export const FORUMS: Forum[] = [
     factSheetUrl: "/materials/prototype-fact-sheet.txt",
     materialsBundleUrl: "/materials/prototype-forum-pack.txt",
     memberFees: {},
-    agenda: [],
+    agenda: [
+      { date: "2025-09-18", time: "09:00", title: "Opening remarks and introductions", description: "Welcome and introductions for the annual Forum.", kind: "logistics" },
+      { date: "2025-09-18", time: "09:30", endTime: "10:45", sessionNumber: 1, title: "Competition enforcement priorities", description: "A roundtable discussion of enforcement priorities and practical implications for counsel.", kind: "session" },
+      { date: "2025-09-19", time: "09:00", endTime: "10:15", sessionNumber: 4, title: "Digital markets and merger review", description: "A comparative discussion of digital markets, merger review, and emerging remedies.", kind: "session" },
+    ],
     materials: [
       { id: "mat009", title: "Forum Summary & Key Themes", type: "pdf", size: "680 KB", url: "/materials/prototype-resource.txt", category: "supplementary", publishedAt: "2025-09-22", revision: 1 },
       { id: "mat010", title: "DOJ Antitrust Division — Enforcement Trends", type: "pdf", size: "1.1 MB", url: "/materials/prototype-resource.txt", category: "required", publishedAt: "2025-09-01", revision: 1 },
