@@ -165,7 +165,7 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => { setMode("magic-link"); setError(""); }}
-                        className="text-white/30 text-xs hover:text-gold transition-colors"
+                        className="text-white/40 text-xs hover:text-[#B8C8DD] transition-colors"
                       >
                         Prefer one-click sign in instead?
                       </button>
@@ -175,7 +175,7 @@ export default function LoginPage() {
                 <div className="border border-white/15 bg-white/[0.05] rounded-lg mt-6 p-4 text-left">
                   <p className="text-cream text-sm font-medium">Can&apos;t access your account?</p>
                   <p className="text-white/45 text-xs mt-1 leading-relaxed">Get help with an expired link, changed firm, or email address you can no longer access.</p>
-                  <div className="mt-3"><Link href="/account-help" className="text-gold text-sm font-medium hover:underline">Trouble signing in? View recovery options</Link></div>
+                  <div className="mt-3"><Link href="/account-help" className="text-[#B8C8DD] text-sm font-medium hover:text-white hover:underline">Trouble signing in? View recovery options</Link></div>
                 </div>
               </>
             ) : (
@@ -211,7 +211,7 @@ export default function LoginPage() {
                 >
                   Use a different email
                 </button>
-                <Link href="/account-help" className="block text-gold/80 text-xs hover:text-gold hover:underline">Link expired or didn&apos;t arrive?</Link>
+                <Link href="/account-help" className="block text-[#B8C8DD] text-xs hover:text-white hover:underline">Link expired or didn&apos;t arrive?</Link>
               </div>
             )}
           </div>

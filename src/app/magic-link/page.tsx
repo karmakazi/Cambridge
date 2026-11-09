@@ -46,7 +46,7 @@ function MagicLinkHandler() {
         {status === "error" && (
           <>
             <p className="text-red-400 text-sm">This link is invalid or has expired.</p>
-            <Link href="/account-help" className="text-gold text-sm underline">Request a new sign-in link</Link>
+            <Link href="/account-help" className="text-[#B8C8DD] text-sm underline hover:text-white">Request a new sign-in link</Link>
             <Link href="/" className="text-white/40 text-xs hover:text-cream">Return to sign in</Link>
           </>
         )}

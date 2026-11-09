@@ -50,6 +50,8 @@ const RSVP_LABELS: Record<RsvpStatus, string> = {
 // exposing the Steering Committee workspace in the current client build.
 const SHOW_STEERING_COMMITTEE_WORKSPACE = false;
 
+const DOWNLOAD_BUTTON_CLASS = "inline-flex h-9 items-center gap-1.5 rounded-md border border-[#253855]/20 bg-white px-3 text-xs font-medium text-[#253855] hover:border-[#253855]/35 hover:bg-[#253855]/5";
+
 function forumDisplayTitle(title: string): string {
   return title.replace(/^Cambridge Forum on /, "");
 }
@@ -85,15 +87,15 @@ function ForumCard({ forum, member, defaultOpen = false }: { forum: Forum; membe
 
   return (
     <div id={`forum-${forum.id}`} className="scroll-mt-5 bg-white rounded-lg border border-border overflow-hidden">
-      <button type="button" className="group block w-full px-4 sm:px-6 py-5 text-left hover:bg-muted/30 transition-colors" onClick={() => setOpen(value => !value)} aria-expanded={open}>
+      <button type="button" className="group block w-full px-4 py-7 text-left transition-colors hover:bg-muted/30 sm:px-7 sm:py-8" onClick={() => setOpen(value => !value)} aria-expanded={open}>
         <span className="flex items-start justify-between gap-4">
           <span className="min-w-0 flex-1">
             <span className="font-garamond text-xl sm:text-2xl font-medium text-[#253855] leading-tight underline decoration-transparent underline-offset-4 group-hover:decoration-[#B17E6B]">{forumDisplayTitle(forum.title)}</span>
-            <span className="mt-2 flex items-center gap-x-5 gap-y-1 text-muted-foreground text-sm flex-wrap">
+            <span className="mt-3 flex items-center gap-x-6 gap-y-2 text-muted-foreground text-sm flex-wrap">
               <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />{formatForumDateRange(forum)}</span>
               <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{forum.logistics.hotel} · {forum.location}</span>
             </span>
-            <span className="mt-3 flex flex-wrap items-center gap-3 text-xs">
+            <span className="mt-5 flex flex-wrap items-center gap-4 text-xs">
               {isUpcoming && <span className="font-medium text-[#253855]">Your response: {RSVP_LABELS[participation.status]}</span>}
               {activeNotices.length > 0 && <span className="inline-flex items-center gap-1 font-medium text-[#8A5E50]"><Megaphone className="w-3.5 h-3.5" />Event update</span>}
             </span>
@@ -233,9 +235,9 @@ function ForumDetail({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-5 sm:px-6">
         {forum.status === "upcoming" ? (
-          <a href={getCalendarFileUrl(forum)} download={`${forumDisplayTitle(forum.title)}-${forum.editionYear}.ics`} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[#253855]/20 bg-white px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5"><CalendarPlus className="h-3.5 w-3.5" />Download Calendar</a>
+          <a href={getCalendarFileUrl(forum)} download={`${forumDisplayTitle(forum.title)}-${forum.editionYear}.ics`} className={DOWNLOAD_BUTTON_CLASS}><CalendarPlus className="h-3.5 w-3.5" />Download Calendar</a>
         ) : <span />}
-        <a href="/materials/prototype-complete-forum-pack.txt" download={`${forumDisplayTitle(forum.title)}-${forum.editionYear}-forum-pack.txt`} className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-md bg-[#253855] px-3 text-xs font-medium text-white hover:bg-[#31496f]"><Download className="h-3.5 w-3.5" />Download Forum Pack</a>
+        <a href="/materials/prototype-complete-forum-pack.txt" download={`${forumDisplayTitle(forum.title)}-${forum.editionYear}-forum-pack.txt`} className={`${DOWNLOAD_BUTTON_CLASS} ml-auto`}><Download className="h-3.5 w-3.5" />Download Forum Pack</a>
       </div>
       <div className="flex max-w-full gap-2 border-b border-border px-4 sm:px-6 pt-5 overflow-x-auto overscroll-x-contain">
         {tabs.map(item => (
@@ -255,7 +257,7 @@ function ForumDetail({
           <div className="space-y-5">
             <section className="rounded-lg border border-[#B17E6B]/30 bg-[#B17E6B]/[0.06] p-4 sm:p-5">
               <p className="label-caps text-[#8A5E50] mb-2">About this Forum</p>
-              <h3 className="font-garamond text-xl font-medium text-foreground">Built around participation, not presentations.</h3>
+              <h3 className="font-garamond text-xl font-medium text-foreground">{forum.overview.headline}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed mt-2 max-w-3xl">{forum.overview.summary}</p>
               <div className="flex flex-wrap gap-2 mt-4">
                 {forum.overview.principles.map(principle => <Badge key={principle} className="bg-white text-[#253855] border border-[#253855]/10 text-[10px] font-medium">{principle}</Badge>)}
@@ -275,8 +277,8 @@ function ForumDetail({
         {tab === "agenda" && (
           <div>
             <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-              <a href="/materials/prototype-agenda.txt" download className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#253855]/20 px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5"><Download className="h-3.5 w-3.5" />Download agenda</a>
-              <button type="button" onClick={() => window.print()} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#253855]/20 px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5"><Printer className="h-3.5 w-3.5" />Print</button>
+              <a href="/materials/prototype-agenda.txt" download className={DOWNLOAD_BUTTON_CLASS}><Download className="h-3.5 w-3.5" />Download agenda</a>
+              <button type="button" onClick={() => window.print()} className={DOWNLOAD_BUTTON_CLASS}><Printer className="h-3.5 w-3.5" />Print</button>
             </div>
             {agendaDates.length > 1 && (
               <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted/70 p-1 mb-5" aria-label="Agenda days">
@@ -330,7 +332,7 @@ function ForumDetail({
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <p className="text-[11px] text-muted-foreground">Subscription articles are linked separately and are not included in the bundle.</p>
-              <a href={forum.materialsBundleUrl} download className="inline-flex items-center gap-1.5 text-xs text-[#253855] font-medium hover:text-[#8A5E50]">
+              <a href={forum.materialsBundleUrl} download className={DOWNLOAD_BUTTON_CLASS}>
                 <Download className="w-3.5 h-3.5" />Download all
               </a>
             </div>
@@ -351,8 +353,10 @@ function ForumDetail({
         </div>
         <div className="flex gap-2 flex-wrap min-w-0">
           {director && <Link href={`/directors/${director.id}`} className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"><UserRound className="w-3.5 h-3.5" />View profile</Link>}
-          <a href={`mailto:${forum.logistics.contactEmail}`} className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"><Mail className="w-3.5 h-3.5" />Email</a>
-          <a href={`mailto:${forum.logistics.contactEmail}?subject=${encodeURIComponent(`Next Forum connection: ${forumDisplayTitle(forum.title)}`)}&body=${encodeURIComponent(`Hello ${forum.logistics.contactName},\n\nI would like to connect about the next ${forumDisplayTitle(forum.title)}.\n\nThank you.`)}`} className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"><CalendarPlus className="w-3.5 h-3.5" />Connect About the Next Forum</a>
+          <a
+            href={`mailto:${forum.logistics.contactEmail}?subject=${encodeURIComponent(`${forum.status === "upcoming" ? "Forum question" : "Next Forum enquiry"}: ${forumDisplayTitle(forum.title)}`)}&body=${encodeURIComponent(`Hello ${forum.logistics.contactName},\n\nI would like to get in touch about ${forum.status === "upcoming" ? forumDisplayTitle(forum.title) : `the next ${forumDisplayTitle(forum.title)}`}.\n\nThank you.`)}`}
+            className="h-8 px-3 rounded-md border border-[#253855]/20 bg-white text-xs font-medium text-[#253855] inline-flex items-center gap-1.5 hover:bg-[#253855]/5"
+          ><Mail className="w-3.5 h-3.5" />Contact Forum Director</a>
         </div>
       </div>
     </div>
@@ -393,7 +397,7 @@ function LogisticsPanel({ forum, memberId }: { forum: Forum; memberId: string })
         <a
           href="/materials/prototype-logistics.txt"
           download={`${forumDisplayTitle(forum.title)}-${forum.editionYear}-logistics.txt`}
-          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#253855]/20 px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5"
+          className={DOWNLOAD_BUTTON_CLASS}
         >
           <Download className="h-3.5 w-3.5" />Download logistics
         </a>
@@ -716,7 +720,7 @@ function SteeringCommitteeWorkspace({ forum, member }: { forum: Forum; member: M
       </div>
       <div className="rounded-lg border border-border p-3 mb-3 flex items-center justify-between gap-3">
         <div><p className="text-sm font-medium">Draft 2026 discussion themes</p><p className="text-xs text-muted-foreground">Working document · Updated 14 October</p></div>
-        <a href="/materials/prototype-resource.txt" download className="text-xs font-medium text-[#8A5E50] inline-flex items-center gap-1"><Download className="w-3.5 h-3.5" />Download</a>
+        <a href="/materials/prototype-resource.txt" download className={DOWNLOAD_BUTTON_CLASS}><Download className="w-3.5 h-3.5" />Download</a>
       </div>
       {notes.length ? notes.map(note => (
         <div key={note.id} className="border-b border-border py-3 last:border-0">
@@ -737,7 +741,7 @@ function ParticipantList({ forum }: { forum: Forum }) {
     <div>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div><h3 className="font-garamond text-lg font-medium">Forum participants</h3><p className="text-xs text-muted-foreground mt-0.5">Select a participant to view their full directory profile and contact preferences.</p></div>
-        <a href="/materials/prototype-participant-roster.txt" download className="inline-flex h-8 w-fit items-center gap-1.5 rounded-md border border-[#253855]/20 px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5"><Download className="h-3.5 w-3.5" />Download participant roster</a>
+        <a href="/materials/prototype-participant-roster.txt" download className={`${DOWNLOAD_BUTTON_CLASS} w-fit`}><Download className="h-3.5 w-3.5" />Download participant roster</a>
       </div>
       <div className="relative mb-4"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input aria-label="Search Forum participants" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search participants by name or organization…" className="h-10 w-full rounded-md border border-border bg-white pl-9 pr-3 text-sm focus:border-[#B17E6B] focus:outline-none" /></div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">

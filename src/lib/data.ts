@@ -70,6 +70,7 @@ export type ForumNotice = {
 };
 
 export type ForumOverview = {
+  headline: string;
   summary: string;
   participantProfile: string;
   format: string;
@@ -606,11 +607,12 @@ export const FORUMS: Forum[] = [
     materialsBundleUrl: "/materials/prototype-forum-pack.txt",
     memberFees: { m001: "$4,950 CAD", m004: "$4,950 CAD", m009: "$5,250 CAD", m015: "$4,750 CAD" },
     overview: {
-      summary: "An invitation-only gathering for experienced lawyers and trust professionals who advise international HNW and UHNW families through disputes and contentious matters.",
-      participantProfile: "Up to 48 peer-selected practitioners, typically with 15 to 25 years of experience, come together to exchange practical insight and address shared challenges.",
-      format: "There are no traditional presentations. The Forum depends on active participation through two days of off-the-record, roundtable discussion and debate.",
-      atmosphere: "The Forum is designed as time away from the demands of the office: informal, face-to-face conversation that develops into a collegial community of trusted peers.",
-      principles: ["Peer selected", "Off the record", "Roundtable format", "Active participation"],
+      headline: "A working Forum for international wealth disputes practitioners.",
+      summary: "The 2026 Second Generation Forum brings senior litigators, trust counsel, trustees, and advisers together in Lisbon to examine the legal and human dynamics shaping cross-border disputes involving HNW and UHNW families.",
+      participantProfile: "A peer-selected group of experienced practitioners working across trusts, estates, succession, capacity, and family-governance disputes in multiple jurisdictions.",
+      format: "Discussion leaders frame practical sessions on family psychology, alternative structures, cross-border capacity, AI, settlement strategy, and the changing role of the modern wealth adviser.",
+      atmosphere: "Off-the-record sessions at Lapa Palace give participants space to compare approaches candidly, test difficult ideas, and build trusted relationships with peers facing similar international disputes.",
+      principles: ["Second Generation", "Cross-border disputes", "Off the record", "Peer led"],
     },
     notices: [
       {

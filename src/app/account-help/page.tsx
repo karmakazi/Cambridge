@@ -59,7 +59,7 @@ export default function AccountHelpPage() {
                 <div className="border-t border-white/10 mt-6 pt-5">
                   <p className="text-cream text-sm font-medium">Changed firms or lost access to your email?</p>
                   <p className="mt-1 text-white/50 text-xs leading-relaxed">Cambridge can verify your identity and update the email address on your member record.</p>
-                  <a href={EMAIL_CHANGE_REQUEST} className="mt-2 inline-flex text-gold text-xs font-medium hover:underline">Request an email change</a>
+                  <a href={EMAIL_CHANGE_REQUEST} className="mt-2 inline-flex text-[#B8C8DD] text-xs font-medium hover:text-white hover:underline">Request an email change</a>
                 </div>
               </>
             ) : (
