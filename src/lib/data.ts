@@ -11,6 +11,8 @@ export type Member = {
   jurisdiction: string;
   practiceArea: string;
   expertise: string[];
+  interests?: string[];
+  interestResources?: InterestResource[];
   bio: string;
   forumsAttended: string[];
   steeringCommitteeForums: string[]; // forum edition IDs where this member served on the SC
@@ -31,6 +33,15 @@ export type Member = {
   avatar: string; // initials
   photo: string; // URL
   photoReviewStatus?: "pending" | "approved";
+};
+
+export type InterestResource = {
+  id: string;
+  interest: string;
+  kind: "attachment" | "link";
+  label: string;
+  url: string;
+  visibility: "members";
 };
 
 export type Forum = {
@@ -182,6 +193,17 @@ export const MEMBERS: Member[] = [
     jurisdiction: "European Union",
     practiceArea: "Antitrust",
     expertise: ["Competition Law", "Merger Control", "State Aid", "Digital Markets"],
+    interests: ["AI and legal practice", "Cross-border capacity", "Next-generation client relationships"],
+    interestResources: [
+      {
+        id: "ir-elena-1",
+        interest: "AI and legal practice",
+        kind: "link",
+        label: "Responsible AI adoption notes",
+        url: "/materials/prototype-resource.txt",
+        visibility: "members",
+      },
+    ],
     bio: "Elena leads one of Italy's foremost competition practices, advising multinationals on EU merger filings and cartel investigations. Former legal advisor to the European Commission.",
     forumsAttended: ["f001", "f004", "f007", "f010"],
     steeringCommitteeForums: ["f004"],

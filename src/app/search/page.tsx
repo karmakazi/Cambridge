@@ -31,8 +31,8 @@ export default function SearchPage() {
 
   const q = query.trim().toLowerCase();
   const allMembers = useMemo(() => getAllResolvedMembers(), []);
-  const people = useMemo(() => !q ? [] : allMembers.filter(member => !member.isCambridgeStaff && `${member.name} ${member.organization} ${member.title} ${member.location} ${member.expertise.join(" ")}`.toLowerCase().includes(q)), [allMembers, q]);
-  const team = useMemo(() => !q ? [] : allMembers.filter(member => member.isCambridgeStaff && `${member.name} ${member.organization} ${member.title} ${member.location} ${member.expertise.join(" ")}`.toLowerCase().includes(q)), [allMembers, q]);
+  const people = useMemo(() => !q ? [] : allMembers.filter(member => !member.isCambridgeStaff && `${member.name} ${member.organization} ${member.title} ${member.location} ${member.expertise.join(" ")} ${(member.interests ?? []).join(" ")}`.toLowerCase().includes(q)), [allMembers, q]);
+  const team = useMemo(() => !q ? [] : allMembers.filter(member => member.isCambridgeStaff && `${member.name} ${member.organization} ${member.title} ${member.location} ${member.expertise.join(" ")} ${(member.interests ?? []).join(" ")}`.toLowerCase().includes(q)), [allMembers, q]);
   const forums = useMemo(() => !q ? [] : FORUMS.filter(forum => `${forum.title} ${forum.area} ${forum.editionYear} ${forum.location} ${forum.venue} ${forum.agenda.map(item => `${item.title} ${item.description} ${(item.topics ?? []).join(" ")}`).join(" ")}`.toLowerCase().includes(q)), [q]);
   const posts = useMemo(() => !q ? [] : getExchangePosts().filter(post => `${post.title} ${post.body} ${post.authorName} ${post.forumSeries} ${post.year} ${post.topics.join(" ")}`.toLowerCase().includes(q)), [q]);
   const resources = useMemo(() => !q ? [] : FORUMS.flatMap(forum => forum.materials.map(material => ({ material, forum }))).filter(({ material, forum }) => `${material.title} ${material.type} ${forum.title} ${forum.editionYear}`.toLowerCase().includes(q)), [q]);

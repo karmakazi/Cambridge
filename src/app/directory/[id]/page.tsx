@@ -11,7 +11,7 @@ import type { ForumEditionSummary, Member } from "@/lib/data";
 import { getForumHistory, getMemberAnniversaryMilestone, getMemberTenure } from "@/lib/prototype-service";
 import { getFavoriteMemberIds, toggleFavoriteMember } from "@/lib/saved-items";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Award, Bookmark, Mail, Globe, MapPin, Phone, Building2, Users, ExternalLink } from "lucide-react";
+import { ArrowLeft, Award, Bookmark, Mail, Globe, MapPin, Phone, Building2, Users, ExternalLink, Link2, Paperclip, ShieldCheck } from "lucide-react";
 
 export default function MemberProfilePage() {
   const router = useRouter();
@@ -141,6 +141,30 @@ export default function MemberProfilePage() {
             ))}
           </div>
         </div>
+
+        {/* Public interests */}
+        {!member.isCambridgeStaff && (member.interests?.length ?? 0) > 0 && (
+          <div className="mb-4 rounded-lg border border-border bg-white px-6 py-5">
+            <h2 className="font-garamond text-base font-medium text-foreground">Areas of Interest</h2>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Topics this member is interested in exploring or connecting with others about.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {member.interests?.map(interest => <span key={interest} className="rounded-md bg-[#B8C8DD]/35 px-2.5 py-1 text-xs text-[#253855]">{interest}</span>)}
+            </div>
+            {(member.interestResources?.length ?? 0) > 0 && (
+              <div className="mt-4 border-t border-border pt-4">
+                <div className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5"/>Supporting resources · Members only</div>
+                <div className="space-y-2">
+                  {member.interestResources?.map(resource => (
+                    <a key={resource.id} href={resource.url} target={resource.kind === "link" ? "_blank" : undefined} rel={resource.kind === "link" ? "noreferrer" : undefined} download={resource.kind === "attachment" ? resource.label : undefined} className="flex items-start gap-2 rounded-md border border-border p-3 hover:border-[#253855]/30 hover:bg-[#253855]/[0.02]">
+                      {resource.kind === "link" ? <Link2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#253855]"/> : <Paperclip className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#253855]"/>}
+                      <span className="min-w-0"><span className="block text-xs font-medium text-[#253855]">{resource.label}</span><span className="block text-[10px] text-muted-foreground">For: {resource.interest}</span></span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Forum history */}
         {!member.isCambridgeStaff && <div className="bg-white rounded-lg border border-border px-6 py-5 mb-4">

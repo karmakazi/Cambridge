@@ -8,7 +8,7 @@ import { getResolvedMember } from "@/lib/store";
 import { submitProfileUpdate } from "@/lib/prototype-service";
 import { MEMBERS, type Member } from "@/lib/data";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, BriefcaseBusiness, CheckCircle2, Clock3, Info, Loader2, ShieldCheck, Upload, X } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, CheckCircle2, Clock3, Info, Link2, Loader2, Paperclip, ShieldCheck, Upload, X } from "lucide-react";
 
 const CONTACT_PREFS = [
   { value: "email", label: "Show email address", desc: "Your email and phone are visible to other logged-in members." },
@@ -18,6 +18,18 @@ const CONTACT_PREFS = [
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 const EXPERTISE_OPTIONS = Array.from(new Set(MEMBERS.flatMap(member => member.expertise))).sort();
+const INTEREST_OPTIONS = [
+  "AI and legal practice",
+  "Business development and cross-marketing",
+  "Cross-border capacity",
+  "Digital assets and succession",
+  "Family governance",
+  "Next-generation client relationships",
+  "Professional wellbeing",
+  "Settlement strategy",
+  "Technology and legal operations",
+  "Wealth structuring",
+];
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -33,6 +45,8 @@ export default function ProfilePage() {
     phone: "",
     bio: "",
     expertise: "",
+    interests: "",
+    interestResources: [] as NonNullable<Member["interestResources"]>,
     contactPreference: "email" as Member["contactPreference"],
     discoverable: true,
     notifyQaDigest: true,
@@ -47,6 +61,10 @@ export default function ProfilePage() {
   });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [photoError, setPhotoError] = useState("");
+  const [otherInterest, setOtherInterest] = useState("");
+  const [resourceInterest, setResourceInterest] = useState("");
+  const [supportingLink, setSupportingLink] = useState("");
+  const [resourceError, setResourceError] = useState("");
   const [professionalStatus, setProfessionalStatus] = useState<"idle" | "draft" | "submitting" | "submitted" | "error">("idle");
   const saveRevision = useRef(0);
 
@@ -70,6 +88,8 @@ export default function ProfilePage() {
         phone: resolvedMember.phone ?? "",
         bio: resolvedMember.bio,
         expertise: resolvedMember.expertise.join(", "),
+        interests: (resolvedMember.interests ?? []).join(", "),
+        interestResources: resolvedMember.interestResources ?? [],
         contactPreference: resolvedMember.contactPreference,
         discoverable: resolvedMember.discoverable,
         notifyQaDigest: resolvedMember.notifyQaDigest ?? true,
@@ -144,7 +164,7 @@ export default function ProfilePage() {
     if (!member) return;
     setProfessionalStatus("submitting");
     try {
-      const updates: Partial<Member> = { title: form.title, organization: form.organization, location: form.location, address: form.address, phone: form.phone, bio: form.bio, expertise: form.expertise.split(",").map(value => value.trim()).filter(Boolean) };
+      const updates: Partial<Member> = { title: form.title, organization: form.organization, location: form.location, address: form.address, phone: form.phone, bio: form.bio, expertise: form.expertise.split(",").map(value => value.trim()).filter(Boolean), interests: form.interests.split(",").map(value => value.trim()).filter(Boolean), interestResources: form.interestResources };
       const existing = JSON.parse(window.localStorage.getItem("cf_profile_change_requests") ?? "{}");
       window.localStorage.setItem("cf_profile_change_requests", JSON.stringify({ ...existing, [member.id]: { updates, submittedAt: new Date().toISOString(), status: "pending" } }));
       setProfessionalStatus("submitted");
@@ -174,7 +194,51 @@ export default function ProfilePage() {
     reader.readAsDataURL(file);
   }
 
+  function addInterest(value: string) {
+    const interests = form.interests.split(",").map(item => item.trim()).filter(Boolean);
+    if (!value || interests.includes(value)) return;
+    updateProfessional("interests", [...interests, value].join(", "));
+    setResourceInterest(current => current || value);
+  }
+
+  function removeInterest(value: string) {
+    updateProfessional("interests", form.interests.split(",").map(item => item.trim()).filter(item => item && item !== value).join(", "));
+    updateProfessional("interestResources", form.interestResources.filter(resource => resource.interest !== value));
+    if (resourceInterest === value) setResourceInterest("");
+  }
+
+  function addOtherInterest() {
+    const value = otherInterest.trim();
+    if (!value) return;
+    addInterest(value);
+    setOtherInterest("");
+  }
+
+  function addSupportingLink() {
+    setResourceError("");
+    if (!resourceInterest) { setResourceError("Choose an area of interest first."); return; }
+    try {
+      const url = new URL(supportingLink.trim());
+      if (url.protocol !== "https:") throw new Error();
+      updateProfessional("interestResources", [...form.interestResources, { id: `interest-link-${Date.now()}`, interest: resourceInterest, kind: "link", label: url.hostname.replace(/^www\./, ""), url: url.toString(), visibility: "members" }]);
+      setSupportingLink("");
+    } catch {
+      setResourceError("Enter a complete, secure https:// link.");
+    }
+  }
+
+  function addSupportingFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    setResourceError("");
+    if (!file) return;
+    if (!resourceInterest) { setResourceError("Choose an area of interest before attaching a file."); event.target.value = ""; return; }
+    if (file.size > 5 * 1024 * 1024) { setResourceError("Choose a file smaller than 5 MB for this prototype."); event.target.value = ""; return; }
+    updateProfessional("interestResources", [...form.interestResources, { id: `interest-file-${Date.now()}`, interest: resourceInterest, kind: "attachment", label: file.name, url: "/materials/prototype-resource.txt", visibility: "members" }]);
+    event.target.value = "";
+  }
+
   if (!member) return null;
+  const selectedInterests = form.interests.split(",").map(value => value.trim()).filter(Boolean);
 
   return (
     <AppShell>
@@ -262,6 +326,44 @@ export default function ProfilePage() {
               <div className="flex flex-wrap gap-1.5 mb-2">{form.expertise.split(",").map(value => value.trim()).filter(Boolean).map(value => <span key={value} className="inline-flex items-center gap-1 rounded-full bg-[#253855]/[0.07] px-2 py-1 text-xs text-[#253855]">{value}<button type="button" onClick={() => updateProfessional("expertise", form.expertise.split(",").map(item => item.trim()).filter(item => item && item !== value).join(", "))}><X className="w-3 h-3"/></button></span>)}</div>
               <select id="profile-expertise" value="" onChange={event => { if (event.target.value) updateProfessional("expertise", [...form.expertise.split(",").map(item => item.trim()).filter(Boolean), event.target.value].join(", ")); }} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Add an area of expertise…</option>{EXPERTISE_OPTIONS.filter(value => !form.expertise.includes(value)).map(value => <option key={value}>{value}</option>)}</select>
               <p className="text-xs text-muted-foreground mt-1">Standardized options keep directory tags and search results consistent.</p>
+            </ProfileField>
+
+            <ProfileField id="profile-interests" label="Areas of Interest">
+              <p className="mb-2 text-xs leading-relaxed text-muted-foreground">These interests are visible on your member profile and help Cambridge members find people with related needs or experience.</p>
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {selectedInterests.map(value => <span key={value} className="inline-flex items-center gap-1 rounded-full bg-[#B8C8DD]/35 px-2 py-1 text-xs text-[#253855]">{value}<button type="button" aria-label={`Remove ${value}`} onClick={() => removeInterest(value)}><X className="h-3 w-3"/></button></span>)}
+              </div>
+              <select id="profile-interests" value="" onChange={event => addInterest(event.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                <option value="">Add an area of interest…</option>
+                {INTEREST_OPTIONS.filter(value => !selectedInterests.includes(value)).map(value => <option key={value}>{value}</option>)}
+              </select>
+              <div className="mt-2 flex gap-2">
+                <Input value={otherInterest} onChange={event => setOtherInterest(event.target.value)} placeholder="Other area of interest" />
+                <button type="button" onClick={addOtherInterest} disabled={!otherInterest.trim()} className="h-10 flex-shrink-0 rounded-md border border-[#253855]/20 px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5 disabled:opacity-40">Add Other</button>
+              </div>
+
+              {selectedInterests.length > 0 && (
+                <div className="mt-4 rounded-md border border-border bg-muted/20 p-3">
+                  <div className="flex items-start gap-2">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#253855]" />
+                    <div><p className="text-xs font-medium text-foreground">Supporting material</p><p className="text-[11px] leading-relaxed text-muted-foreground">Optional files and secure links are associated with one interest and available only to signed-in Cambridge members.</p></div>
+                  </div>
+                  <select value={resourceInterest} onChange={event => setResourceInterest(event.target.value)} className="mt-3 h-9 w-full rounded-md border border-input bg-white px-3 text-xs">
+                    <option value="">Choose an interest…</option>
+                    {selectedInterests.map(value => <option key={value}>{value}</option>)}
+                  </select>
+                  <div className="mt-2 flex gap-2">
+                    <Input type="url" value={supportingLink} onChange={event => setSupportingLink(event.target.value)} placeholder="https:// secure supporting link" className="h-9 text-xs" />
+                    <button type="button" onClick={addSupportingLink} disabled={!supportingLink.trim()} className="inline-flex h-9 flex-shrink-0 items-center gap-1.5 rounded-md border border-[#253855]/20 bg-white px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5 disabled:opacity-40"><Link2 className="h-3.5 w-3.5"/>Add link</button>
+                  </div>
+                  <label className="mt-2 inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-[#253855]/20 bg-white px-3 text-xs font-medium text-[#253855] hover:bg-[#253855]/5">
+                    <Paperclip className="h-3.5 w-3.5"/>Attach file
+                    <input type="file" onChange={addSupportingFile} className="sr-only" />
+                  </label>
+                  {resourceError && <p className="mt-2 text-xs text-red-700">{resourceError}</p>}
+                  {form.interestResources.length > 0 && <div className="mt-3 space-y-2">{form.interestResources.map(resource => <div key={resource.id} className="flex items-start justify-between gap-2 rounded border border-border bg-white p-2"><div className="min-w-0"><p className="truncate text-xs font-medium text-foreground">{resource.label}</p><p className="text-[10px] text-muted-foreground">{resource.interest} · Members only</p></div><button type="button" onClick={() => updateProfessional("interestResources", form.interestResources.filter(item => item.id !== resource.id))} aria-label={`Remove ${resource.label}`} className="text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5"/></button></div>)}</div>}
+                </div>
+              )}
             </ProfileField>
 
             <ProfileField id="profile-bio" label="Bio">

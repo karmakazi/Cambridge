@@ -66,7 +66,7 @@ export default function DirectoryPage() {
     const normalizedQuery = query.toLowerCase();
     return members.filter(member => {
       const matchesQuery = !normalizedQuery || [
-        member.name, member.publishedName ?? "", member.preferredName ?? "", member.organization, member.title, member.location, ...member.expertise,
+        member.name, member.publishedName ?? "", member.preferredName ?? "", member.organization, member.title, member.location, ...member.expertise, ...(member.interests ?? []),
       ].some(value => value.toLowerCase().includes(normalizedQuery));
       const matchesPractice = !practice || member.practiceArea === practice;
       const matchesJurisdiction = !jurisdiction || member.jurisdiction === jurisdiction;
@@ -120,7 +120,7 @@ export default function DirectoryPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               aria-label="Search members"
-              placeholder="Search by name, firm, expertise…"
+              placeholder="Search by name, firm, expertise or interests…"
               value={query}
               onChange={event => setQuery(event.target.value)}
               className="pl-9 bg-white"
