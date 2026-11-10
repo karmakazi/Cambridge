@@ -30,7 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { getSavedMaterialIds, toggleSavedMaterial } from "@/lib/saved-items";
 import {
   Award, BedDouble, Bookmark, Calendar, CalendarPlus, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Download,
-  ExternalLink, Eye, FileText, Globe, Loader2, Mail, MapPin, Megaphone, MessageSquare, Phone, Plane, Printer, Search, Send, ShieldCheck, UserRound, Users, X, XCircle,
+  ExternalLink, Eye, FileText, Globe, Loader2, Mail, MapPin, Megaphone, MessageSquare, Phone, Plane, Printer, Search, Send, UserRound, Users, X, XCircle,
 } from "lucide-react";
 
 const RSVP_OPTIONS: Array<{ value: RsvpStatus; label: string }> = [
@@ -264,12 +264,6 @@ function ForumDetail({
               </div>
             </section>
 
-            <div className="grid gap-3 md:grid-cols-3">
-              <OverviewCard icon={<Users className="w-4 h-4" />} label="Who participates" text={forum.overview.participantProfile} />
-              <OverviewCard icon={<MessageSquare className="w-4 h-4" />} label="How it works" text={forum.overview.format} />
-              <OverviewCard icon={<ShieldCheck className="w-4 h-4" />} label="The atmosphere" text={forum.overview.atmosphere} />
-            </div>
-
             <p className="text-xs text-muted-foreground leading-relaxed">First time attending? Your Forum Director can answer questions about the format, preparation, or what to expect.</p>
           </div>
         )}
@@ -360,16 +354,6 @@ function ForumDetail({
         </div>
       </div>
     </div>
-  );
-}
-
-function OverviewCard({ icon, label, text }: { icon: ReactNode; label: string; text: string }) {
-  return (
-    <section className="rounded-lg border border-border bg-white p-4">
-      <div className="w-8 h-8 rounded-full bg-[#253855]/8 text-[#253855] flex items-center justify-center mb-3">{icon}</div>
-      <p className="label-caps text-[#8A5E50] mb-1.5">{label}</p>
-      <p className="text-xs text-muted-foreground leading-relaxed">{text}</p>
-    </section>
   );
 }
 
